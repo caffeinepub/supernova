@@ -15,59 +15,60 @@ export function useConversationHistory() {
   const { mutateAsync: addEntry } = useAddQueryEntry();
   
   const [activeConversationId, setActiveConversationId] = useState<bigint | null>(null);
-
-  const isAuthenticated = !!identity;
-
-  // Load entries for the active conversation
   const { data: activeEntries = [] } = useGetConversationEntries(activeConversationId);
 
-  // Clear conversation state when unauthenticated
+  // Only auto-select conversation when authenticated
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!identity) {
+      // Clear active conversation when logged out
       setActiveConversationId(null);
+      return;
     }
-  }, [isAuthenticated]);
 
-  // Auto-select first conversation if none is active
-  useEffect(() => {
-    if (isAuthenticated && conversationSummaries.length > 0 && activeConversationId === null) {
-      setActiveConversationId(conversationSummaries[0].id);
+    // Auto-select the most recent conversation or create a new one
+    if (conversationSummaries.length > 0 && activeConversationId === null) {
+      const mostRecent = conversationSummaries.reduce((latest, current) => 
+        current.lastUpdated > latest.lastUpdated ? current : latest
+      );
+      setActiveConversationId(mostRecent.id);
+    } else if (conversationSummaries.length === 0 && activeConversationId === null) {
+      // Create initial conversation when user first logs in
+      createConversation('New conversation')
+        .then(id => setActiveConversationId(id))
+        .catch(err => console.error('Failed to create initial conversation:', err));
     }
-  }, [conversationSummaries, activeConversationId, isAuthenticated]);
-
-  const saveEntry = async (question: string, response: Response, photo?: File) => {
-    if (!isAuthenticated || activeConversationId === null) return;
-    
-    try {
-      // Generate title from first question if conversation is empty
-      const title = activeEntries.length === 0 ? question.slice(0, 50) : undefined;
-      await addEntry({ 
-        conversationId: activeConversationId, 
-        question, 
-        response,
-        title,
-        photo
-      });
-    } catch (error) {
-      console.error('Failed to save conversation entry:', error);
-      throw error;
-    }
-  };
+  }, [conversationSummaries, activeConversationId, identity, createConversation]);
 
   const startNewConversation = async () => {
-    if (!isAuthenticated) return;
-    
-    try {
-      const newId = await createConversation('New conversation');
-      setActiveConversationId(newId);
-    } catch (error) {
-      console.error('Failed to create conversation:', error);
-      throw error;
+    if (!identity) {
+      throw new Error('Not authenticated');
     }
+    const newId = await createConversation('New conversation');
+    setActiveConversationId(newId);
   };
 
   const switchConversation = (conversationId: bigint) => {
     setActiveConversationId(conversationId);
+  };
+
+  const saveEntry = async (question: string, response: Response, photo?: File) => {
+    if (!identity || activeConversationId === null) {
+      // Silently skip saving if not authenticated
+      return;
+    }
+
+    // Generate title from first question if this is the first entry
+    const title = activeEntries.length === 0 
+      ? question.slice(0, 50) + (question.length > 50 ? '...' : '')
+      : undefined;
+
+    await addEntry({
+      conversationId: activeConversationId,
+      question,
+      response,
+      title,
+      photo
+    });
   };
 
   return {

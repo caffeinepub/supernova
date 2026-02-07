@@ -2,12 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-a-visible-photo-upload-control-to-the-chat-composer-that-lets-a-user-select-one-or-more-images-png-jpg-webp-shows-previews-of-the-selected-images-and-allows-removing-an-image-before-sending",
-      "featureTitle": "Add a visible photo-upload control to the chat composer that lets a user select one or more images (PNG/JPG/WebP), shows previews of the selected images, and allows removing an image before sending.",
+      "featureId": "feature-prevent-unauthenticated-users-from-hitting-authenticated-backend-methods-by-gating-react-query-hooks-on-internet-identity-authentication-state-so-the-app-works-in-anonymous-guest-mode-without-backend-traps",
+      "featureTitle": "Prevent unauthenticated users from hitting authenticated backend methods by gating React Query hooks on Internet Identity authentication state, so the app works in anonymous/guest mode without backend traps.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/chat/ChatComposer.tsx",
-        "frontend/src/components/chat/types.ts"
+        "frontend/src/hooks/useConversationHistory.ts",
+        "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -24,12 +23,12 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-support-sending-chat-messages-with-optional-uploaded-photos-rendering-the-photos-inline-in-the-conversation-thread-for-the-corresponding-user-message-and-when-loading-conversation-history",
-      "featureTitle": "Support sending chat messages with optional uploaded photos, rendering the photos inline in the conversation thread for the corresponding user message (and when loading conversation history).",
+      "featureId": "feature-add-a-first-class-guest-mode-ux-that-lets-users-keep-chatting-without-logging-in-while-clearly-communicating-that-history-export-saving-require-login",
+      "featureTitle": "Add a first-class guest mode UX that lets users keep chatting without logging in, while clearly communicating that history/export/saving require login.",
       "files": [
         "frontend/src/App.tsx",
-        "frontend/src/components/chat/ConversationThread.tsx",
-        "frontend/src/components/chat/types.ts"
+        "frontend/src/components/history/ConversationSidebar.tsx",
+        "frontend/src/hooks/useConversationHistory.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -46,12 +45,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-extend-the-backend-conversation-entry-model-and-api-to-store-optional-photo-attachments-per-query-entry-and-update-frontend-query-hooks-to-use-the-updated-api-when-saving-and-fetching-conversation-entries",
-      "featureTitle": "Extend the backend conversation entry model and API to store optional photo attachments per query entry, and update frontend query hooks to use the updated API when saving and fetching conversation entries.",
+      "featureId": "feature-improve-login-reliability-and-user-facing-error-reporting-in-the-header-login-control-so-failed-login-attempts-provide-actionable-feedback-and-recovery-options",
+      "featureTitle": "Improve login reliability and user-facing error reporting in the header login control so failed login attempts provide actionable feedback and recovery options.",
       "files": [
         "frontend/src/App.tsx",
-        "frontend/src/hooks/useConversationHistory.ts",
-        "frontend/src/hooks/useQueries.ts"
+        "frontend/src/components/auth/LoginButton.tsx"
       ],
       "components": [
         "authorization@4.0.0",

@@ -1,91 +1,73 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Chat photo attachments in composer and conversation history (frontend wiring)",
+  "title": "Fix auth gating, guest mode UX, and resilient Internet Identity login feedback",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add an image upload control to the chat composer with multi-select, thumbnails, remove, and clear-on-send behavior.",
+      "summary": "Gate authenticated React Query calls on Internet Identity state to prevent unauthorized backend traps and retries in guest mode.",
       "acceptanceCriteria": [
-        "ChatComposer shows an attachment/upload button next to the existing composer controls.",
-        "Clicking the button opens a file picker limited to common image formats (png, jpg/jpeg, webp).",
-        "After selection, the composer shows thumbnail previews for each selected image.",
-        "Each selected image can be removed before sending.",
-        "Sending a message clears the selected images from the composer state."
+        "When not logged in, the app does not call backend methods that require user permissions (e.g., getCallerUserProfile, listConversations, getConversationEntries, exportUserData) and does not show uncaught errors due to backend authorization traps.",
+        "When logged in, all existing authenticated queries and mutations still work (profile, conversation history, saving entries, export).",
+        "React Query does not repeatedly retry unauthorized calls in the background when the user is not authenticated."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/chat/types.ts",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Extend chat UI types to represent optional photo attachments on user messages (e.g., local preview URLs for pending attachments and persisted blob URLs for history)."
+          "description": "Use the authorization component guidance to ensure authenticated backend calls only run when Internet Identity is present (gate `enabled` for authenticated queries; add `retry: false`/controlled retry behavior for auth-protected queries). Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/chat/ChatComposer.tsx",
+          "path": "frontend/src/hooks/useConversationHistory.ts",
           "operation": "modify",
-          "description": "Add a visible photo upload control (file input triggered by a button) supporting multi-select for PNG/JPG/WebP, store selected files in component state, render thumbnail previews, allow removing individual selections, and clear attachment state after successful send. Use the blob-storage ExternalBlob capability (wrapping selected image bytes for upload later) where appropriate; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Update the ChatComposer wiring so onSendMessage can receive attached photos (in addition to text/mode), and ensure composer state is cleared after sending (including attachments)."
+          "description": "Ensure conversation-history fetching and mutations are only triggered when authenticated, and avoid indirect triggers that could cause authenticated queries to run while unauthenticated (align with auth gating changes). Use authorization component guidance for handling auth-protected data flow; verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Allow sending messages with optional photos and render those photos inline for the corresponding user messages, including when loading conversation history.",
+      "summary": "Add first-class guest UX: allow unlimited chatting without login while clearly labeling Guest and restricting history/export/saving to authenticated sessions without disrupting a guest session on mid-session login.",
       "acceptanceCriteria": [
-        "When a user sends a message with photos attached, the new user message in the thread renders the photo(s) inline (e.g., above or below the text).",
-        "When switching conversations or reloading the app, previously sent messages still show their uploaded photos.",
-        "Assistant messages do not require photo attachments, but the UI remains stable if attachments are absent."
+        "Unauthenticated users can continue sending messages beyond the current limit without being blocked by the composer disabled state.",
+        "The UI clearly labels the session as Guest when not authenticated, and indicates which features require login (history sidebar, saving conversation, exporting data).",
+        "If a guest user logs in mid-session, the current on-screen chat remains usable (no blank screen / no crash), and the app continues with authenticated features available."
       ],
       "file_operations": [
         {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "When sending, immediately add a user Message that includes local photo previews (e.g., object URLs) so the thread renders attachments optimistically; when history is loaded, map persisted attachments on entries into Message photo render data using blob-storage ExternalBlob.getDirectURL() for stable inline rendering. Verify the component's usage instructions before implementing."
+          "description": "Remove the guest message-limit gating that disables the composer; add clear Guest labeling in the header and UI messaging that history/export/saving require login; adjust message hydration logic so a mid-session login does not wipe/replace the current guest chat unless the user explicitly navigates to history. Use authorization component guidance for separating guest vs authenticated feature access; verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/chat/ConversationThread.tsx",
+          "path": "frontend/src/components/history/ConversationSidebar.tsx",
           "operation": "modify",
-          "description": "Render optional photo attachments inline for user messages (e.g., a responsive thumbnail grid above/below the text), ensuring assistant message layout remains unchanged and UI remains stable when attachments are absent."
+          "description": "Support a guest-mode sidebar state (or equivalent UI) that explains history/export require login and disables or converts actions into a login prompt while still allowing the main chat UI to function. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/chat/types.ts",
+          "path": "frontend/src/hooks/useConversationHistory.ts",
           "operation": "modify",
-          "description": "Refine message attachment typing as needed to support both local (pre-send) and persisted (history) photo rendering without impacting assistant messages."
+          "description": "Prevent automatic selection/loading of authenticated conversation history from implicitly overwriting the in-memory guest chat on initial login; only hydrate chat from history on explicit user action (e.g., selecting a conversation/new chat after login). Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Update frontend types and query hooks to send and fetch conversation entries with optional photo attachments using the updated backend API.",
+      "summary": "Improve login reliability and error reporting in the header login control with actionable recovery and no auth loops.",
       "acceptanceCriteria": [
-        "Backend QueryEntry type includes an optional list of photo attachments (including at least bytes and content-type, plus a filename field if available).",
-        "Backend addQueryEntry (or a new compatible method) accepts optional photo attachments and persists them with the entry.",
-        "Frontend hooks that save entries (useAddQueryEntry/useConversationHistory.saveEntry) can include attachments when present and still work when no attachments are provided.",
-        "Fetched conversation entries expose attachments to the frontend so they can be rendered in the thread."
+        "If Internet Identity login fails (including the \"User is already authenticated\" path), the user sees an English error message (toast and/or inline) with a clear next step (e.g., retry login, logout then login).",
+        "The login button shows a stable loading state during login and returns to an appropriate idle state afterward.",
+        "No infinite login/logout loop occurs when the hook reports \"User is already authenticated\"."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/backend.d.ts",
+          "path": "frontend/src/components/auth/LoginButton.tsx",
           "operation": "modify",
-          "description": "Update the frontend backend type declarations to match the updated conversation entry attachment model (QueryEntry exposing optional list of photo attachments; addQueryEntry accepting optional attachments) so TypeScript compilation aligns with the new API."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Extend useAddQueryEntry to accept optional photo attachments and pass them through to the backend actor call; convert selected files to the attachment format expected by the updated API using blob-storage ExternalBlob.fromBytes (optionally with upload progress) and include content-type/filename when available. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/useConversationHistory.ts",
-          "operation": "modify",
-          "description": "Update saveEntry to accept optional attachments and forward them to useAddQueryEntry, while preserving existing behavior when no attachments are provided."
+          "description": "Add user-facing error reporting (toast and/or inline) for Internet Identity failures; handle \"User is already authenticated\" with a single controlled recovery attempt (e.g., clear then retry once) and provide actionable next steps (retry, logout then login) while maintaining a stable loading state. Use authorization component guidance for clearing cached application data on logout; verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Pass optional photo attachments from the composer through to saveEntry so persisted conversation history includes attachments and can be re-rendered on reload/switch."
+          "description": "Ensure global auth UX messaging aligns with improved login feedback (e.g., guest vs logged-in indicators) and avoids any unintended re-render loops during auth transitions. Verify the component's usage instructions before implementing."
         }
       ]
     }

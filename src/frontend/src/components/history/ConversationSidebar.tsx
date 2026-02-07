@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Plus, MessageSquare, Download } from 'lucide-react';
+import { Plus, MessageSquare, Download, LogIn } from 'lucide-react';
 import type { ConversationSummary } from '../../backend';
 
 type ConversationSidebarProps = {
@@ -21,6 +21,18 @@ export default function ConversationSidebar({
   onExportData,
   isAuthenticated
 }: ConversationSidebarProps) {
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col h-full bg-sidebar items-center justify-center p-6 text-center">
+        <LogIn className="h-12 w-12 text-muted-foreground mb-4" />
+        <h3 className="text-lg font-semibold mb-2">Login Required</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Log in to save your conversations, access history, and sync across devices.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full bg-sidebar">
       <div className="p-3">

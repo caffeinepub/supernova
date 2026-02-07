@@ -1,12 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Add photo attachments to chat messages so users can upload images from the composer and see them persisted and rendered in conversation history and exports.
+**Goal:** Make the app usable without login by preventing unauthorized backend calls, adding a clear guest mode experience, and improving Internet Identity login reliability and error feedback.
 
 **Planned changes:**
-- Add a photo upload control to the chat composer with image file picking (PNG/JPG/WebP), thumbnail previews, and per-image removal before sending.
-- Update message sending to support optional photo attachments and render attached photos inline with the corresponding user message in the conversation thread.
-- Extend backend conversation entry storage and APIs to persist optional photo attachments (bytes, content-type, filename when available) and update frontend save/fetch hooks to use the updated API.
-- Include photo attachment data in the existing user data export output.
+- Gate authenticated React Query hooks (queries/mutations) on Internet Identity authentication state so unauthenticated sessions do not call protected backend methods or trigger authorization traps/retries.
+- Add a first-class Guest mode UX: keep chat composer enabled for unauthenticated users, label the session as Guest, and clearly indicate that history/saving/export require login.
+- Improve header login control behavior: stable loading state, actionable English error messages on failures (including “User is already authenticated”), and prevent any infinite login/logout loop.
 
-**User-visible outcome:** Users can attach one or more photos to a chat message, preview/remove them before sending, and later see the same photos when reopening conversation history or exporting their data.
+**User-visible outcome:** Users can continue chatting in Guest mode without crashes or backend authorization errors, and can log in (even mid-session) to unlock history/saving/export with clearer, more reliable login feedback.

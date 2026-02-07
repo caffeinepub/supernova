@@ -18,6 +18,7 @@ import { Menu, HelpCircle, Volume2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
@@ -45,9 +46,15 @@ function App() {
   const [voiceSettingsOpen, setVoiceSettingsOpen] = useState(false);
   const [composerValue, setComposerValue] = useState('');
   const lastMessageIdRef = useRef<string | null>(null);
+  const [isGuestSession, setIsGuestSession] = useState(false);
 
   const isAuthenticated = !!identity;
   const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
+
+  // Track if we're in a guest session (messages exist but not authenticated)
+  useEffect(() => {
+    setIsGuestSession(!isAuthenticated && messages.length > 0);
+  }, [isAuthenticated, messages.length]);
 
   // Show warning when voice mode is enabled but TTS is not supported
   useEffect(() => {
@@ -56,9 +63,10 @@ function App() {
     }
   }, [voiceMode, ttsSupported]);
 
-  // Load conversation entries when active conversation changes
+  // Load conversation entries when active conversation changes (only if authenticated)
   useEffect(() => {
-    if (activeEntries.length > 0) {
+    // Only load from backend if authenticated and we have entries
+    if (isAuthenticated && activeEntries.length > 0) {
       const loadedMessages: Message[] = activeEntries.flatMap((entry, idx) => {
         const userMessage: Message = {
           id: `user-${idx}-${entry.timestamp.toString()}`,
@@ -91,11 +99,13 @@ function App() {
       lastMessageIdRef.current = loadedMessages.length > 0 
         ? loadedMessages[loadedMessages.length - 1].id 
         : null;
-    } else {
+    } else if (isAuthenticated && activeEntries.length === 0 && activeConversationId !== null) {
+      // Clear messages only if we explicitly switched to an empty conversation
       setMessages([]);
       lastMessageIdRef.current = null;
     }
-  }, [activeEntries]);
+    // Don't clear messages when not authenticated (preserve guest session)
+  }, [activeEntries, isAuthenticated, activeConversationId]);
 
   const handleSendMessage = async (content: string, mode: MessageMode, photos?: File[]) => {
     const userMessage: Message = {
@@ -141,8 +151,13 @@ function App() {
 
       // Save to backend if authenticated (only save first photo for now)
       if (isAuthenticated) {
-        const photoToSave = photos && photos.length > 0 ? photos[0] : undefined;
-        await saveEntry(content, result, photoToSave);
+        try {
+          const photoToSave = photos && photos.length > 0 ? photos[0] : undefined;
+          await saveEntry(content, result, photoToSave);
+        } catch (error) {
+          console.error('Failed to save entry:', error);
+          // Don't show error to user - the message is still visible locally
+        }
       }
     } catch (error) {
       const errorMessage: Message = {
@@ -159,6 +174,14 @@ function App() {
   };
 
   const handleNewConversation = async () => {
+    if (!isAuthenticated) {
+      // For guests, just clear the local messages
+      setMessages([]);
+      lastMessageIdRef.current = null;
+      setSidebarOpen(false);
+      return;
+    }
+
     try {
       await startNewConversation();
       setMessages([]);
@@ -198,7 +221,7 @@ function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <div className="flex h-screen bg-background text-foreground">
-        {/* Desktop Sidebar - persistent on md+ */}
+        {/* Desktop Sidebar - persistent on md+ (only when authenticated) */}
         {isAuthenticated && (
           <aside className="hidden md:flex w-64 border-r border-border bg-sidebar flex-col">
             <ConversationSidebar
@@ -212,7 +235,7 @@ function App() {
           </aside>
         )}
 
-        {/* Mobile Sidebar - drawer */}
+        {/* Mobile Sidebar - drawer (only when authenticated) */}
         {isAuthenticated && (
           <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
             <SheetContent side="left" className="w-80 p-0">
@@ -246,6 +269,11 @@ function App() {
                 <h1 className="text-lg md:text-xl font-semibold">
                   SuperNova
                 </h1>
+                {!isAuthenticated && (
+                  <Badge variant="secondary" className="text-xs">
+                    Guest
+                  </Badge>
+                )}
               </div>
               
               <div className="flex items-center gap-1">
@@ -281,6 +309,15 @@ function App() {
             </div>
           </header>
 
+          {/* Guest mode info banner */}
+          {!isAuthenticated && messages.length > 0 && (
+            <Alert className="m-4 mb-0 border-blue-500/50 bg-blue-500/10">
+              <AlertDescription className="text-sm">
+                You're chatting as a guest. <button onClick={() => document.querySelector<HTMLButtonElement>('[data-login-button]')?.click()} className="underline font-medium">Log in</button> to save your conversation history and access it from any device.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Partial failure warning */}
           {partialFailureWarning && (
             <Alert className="m-4 mb-0 border-amber-500/50 bg-amber-500/10">
@@ -314,15 +351,8 @@ function App() {
                   onChange={setComposerValue}
                   onSendMessage={handleSendMessage}
                   isLoading={retrievalLoading}
-                  disabled={!isAuthenticated && messages.length >= 3}
+                  disabled={false}
                 />
-                {!isAuthenticated && messages.length >= 3 && (
-                  <div className="px-4 pb-3 text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Please log in to continue the conversation and save your history.
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
           </main>

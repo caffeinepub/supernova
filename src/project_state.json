@@ -4,29 +4,29 @@
   "summary": "New project",
   "architectural_notes": [],
   "known_issues": [
-    "User cannot find/does not see the option to upload photos"
+    "Login/authentication is not working properly; users cannot log in or use the app automatically as expected"
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-add-a-visible-photo-upload-control-to-the-chat-composer-that-lets-a-user-select-one-or-more-images-png-jpg-webp-shows-previews-of-the-selected-images-and-allows-removing-an-image-before-sending",
-      "title": "Add a visible photo-upload control to the chat composer that lets a user select one or more images (PNG/JPG/WebP), shows previews of the selected images, and allows removing an image before sending.",
+      "id": "feature-prevent-unauthenticated-users-from-hitting-authenticated-backend-methods-by-gating-react-query-hooks-on-internet-identity-authentication-state-so-the-app-works-in-anonymous-guest-mode-without-backend-traps",
+      "title": "Prevent unauthenticated users from hitting authenticated backend methods by gating React Query hooks on Internet Identity authentication state, so the app works in anonymous/guest mode without backend traps.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-support-sending-chat-messages-with-optional-uploaded-photos-rendering-the-photos-inline-in-the-conversation-thread-for-the-corresponding-user-message-and-when-loading-conversation-history",
-      "title": "Support sending chat messages with optional uploaded photos, rendering the photos inline in the conversation thread for the corresponding user message (and when loading conversation history).",
+      "id": "feature-add-a-first-class-guest-mode-ux-that-lets-users-keep-chatting-without-logging-in-while-clearly-communicating-that-history-export-saving-require-login",
+      "title": "Add a first-class guest mode UX that lets users keep chatting without logging in, while clearly communicating that history/export/saving require login.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-extend-the-backend-conversation-entry-model-and-api-to-store-optional-photo-attachments-per-query-entry-and-update-frontend-query-hooks-to-use-the-updated-api-when-saving-and-fetching-conversation-entries",
-      "title": "Extend the backend conversation entry model and API to store optional photo attachments per query entry, and update frontend query hooks to use the updated API when saving and fetching conversation entries.",
+      "id": "feature-improve-login-reliability-and-user-facing-error-reporting-in-the-header-login-control-so-failed-login-attempts-provide-actionable-feedback-and-recovery-options",
+      "title": "Improve login reliability and user-facing error reporting in the header login control so failed login attempts provide actionable feedback and recovery options.",
       "reqIds": [
         "REQ-3"
       ],
@@ -36,20 +36,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add an option/UI to upload photos",
+      "summary": "Add user authentication (login) and/or automatic sign-in/guest access so the app can be used without manual login issues",
       "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-5",
-      "summary": "Include uploaded photos in the existing user data export so exported conversation history contains the photo attachment data for each entry that has them.",
-      "reqIds": [
-        "REQ-4"
-      ],
       "status": "pending"
     }
   ],
-  "projectName": "Add photo upload option to chat composer and persist uploaded photos in conversation history",
+  "projectName": "Fix login flow and enable guest usage when Internet Identity is unavailable",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

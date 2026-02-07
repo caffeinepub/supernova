@@ -1,92 +1,71 @@
 {
   "kind": "build_request",
-  "title": "Add photo upload option to chat composer and persist uploaded photos in conversation history",
-  "priority": "normal",
+  "title": "Fix login flow and enable guest usage when Internet Identity is unavailable",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a visible photo-upload control to the chat composer that lets a user select one or more images (PNG/JPG/WebP), shows previews of the selected images, and allows removing an image before sending.",
+      "text": "Prevent unauthenticated users from hitting authenticated backend methods by gating React Query hooks on Internet Identity authentication state, so the app works in anonymous/guest mode without backend traps.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5"
+          "msg-6"
         ],
         "quotes": [
-          "I dont see the option to upload photots"
+          "this shits not working properly I need to be able to login or use automatically"
         ]
       },
       "acceptanceCriteria": [
-        "ChatComposer shows an attachment/upload button next to the existing composer controls.",
-        "Clicking the button opens a file picker limited to common image formats (png, jpg/jpeg, webp).",
-        "After selection, the composer shows thumbnail previews for each selected image.",
-        "Each selected image can be removed before sending.",
-        "Sending a message clears the selected images from the composer state."
+        "When not logged in, the app does not call backend methods that require user permissions (e.g., getCallerUserProfile, listConversations, getConversationEntries, exportUserData) and does not show uncaught errors due to backend authorization traps.",
+        "When logged in, all existing authenticated queries and mutations still work (profile, conversation history, saving entries, export).",
+        "React Query does not repeatedly retry unauthorized calls in the background when the user is not authenticated."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Support sending chat messages with optional uploaded photos, rendering the photos inline in the conversation thread for the corresponding user message (and when loading conversation history).",
-      "target": "both",
+      "text": "Add a first-class guest mode UX that lets users keep chatting without logging in, while clearly communicating that history/export/saving require login.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5"
+          "msg-6"
         ],
         "quotes": [
-          "I dont see the option to upload photots"
+          "I need to be able to login or use automatically"
         ]
       },
       "acceptanceCriteria": [
-        "When a user sends a message with photos attached, the new user message in the thread renders the photo(s) inline (e.g., above or below the text).",
-        "When switching conversations or reloading the app, previously sent messages still show their uploaded photos.",
-        "Assistant messages do not require photo attachments, but the UI remains stable if attachments are absent."
+        "Unauthenticated users can continue sending messages beyond the current limit without being blocked by the composer disabled state.",
+        "The UI clearly labels the session as Guest when not authenticated, and indicates which features require login (history sidebar, saving conversation, exporting data).",
+        "If a guest user logs in mid-session, the current on-screen chat remains usable (no blank screen / no crash), and the app continues with authenticated features available."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Extend the backend conversation entry model and API to store optional photo attachments per query entry, and update frontend query hooks to use the updated API when saving and fetching conversation entries.",
-      "target": "both",
+      "text": "Improve login reliability and user-facing error reporting in the header login control so failed login attempts provide actionable feedback and recovery options.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5"
+          "msg-6"
         ],
         "quotes": [
-          "I dont see the option to upload photots"
+          "this shits not working properly I need to be able to login or use automatically"
         ]
       },
       "acceptanceCriteria": [
-        "Backend QueryEntry type includes an optional list of photo attachments (including at least bytes and content-type, plus a filename field if available).",
-        "Backend addQueryEntry (or a new compatible method) accepts optional photo attachments and persists them with the entry.",
-        "Frontend hooks that save entries (useAddQueryEntry/useConversationHistory.saveEntry) can include attachments when present and still work when no attachments are provided.",
-        "Fetched conversation entries expose attachments to the frontend so they can be rendered in the thread."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Include uploaded photos in the existing user data export so exported conversation history contains the photo attachment data for each entry that has them.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-5"
-        ],
-        "quotes": [
-          "I dont see the option to upload photots"
-        ]
-      },
-      "acceptanceCriteria": [
-        "exportUserData output includes photo attachment data for entries that have photos.",
-        "Export still works for users with no photos and for existing conversations created before this change."
+        "If Internet Identity login fails (including the \"User is already authenticated\" path), the user sees an English error message (toast and/or inline) with a clear next step (e.g., retry login, logout then login).",
+        "The login button shows a stable loading state during login and returns to an appropriate idle state afterward.",
+        "No infinite login/logout loop occurs when the hook reports \"User is already authenticated\"."
       ]
     }
   ],
   "constraints": [
-    "Use English for any user-facing text.",
-    "Do not edit files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui (compose them instead).",
-    "Backend must remain a single Motoko actor in backend/main.mo; only add backend/migration.mo if an upgrade requires state migration."
+    "Do not edit immutable frontend paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, and frontend/src/components/ui/*.",
+    "Backend must remain a single Motoko actor in backend/main.mo."
   ],
   "nonGoals": [
-    "Do not implement AI/image understanding, OCR, or any automated photo analysis.",
-    "Do not integrate third-party file storage/CDNs or external databases.",
-    "Do not add non-Internet-Identity authentication methods."
+    "Adding third-party authentication providers (only Internet Identity is supported).",
+    "Adding an external database or any non-IC persistence for guest data beyond local browser storage.",
+    "Building real-time features (websockets/chat)."
   ],
   "imageRequirements": {
     "required": [],

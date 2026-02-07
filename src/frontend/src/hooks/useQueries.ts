@@ -1,10 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
+import { useInternetIdentity } from './useInternetIdentity';
 import type { UserProfile, ConversationSummary, QueryEntry, Response, ExportData, BlobRef } from '../backend';
 import { ExternalBlob } from '../backend';
 
 export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
 
   const query = useQuery<UserProfile | null>({
     queryKey: ['currentUserProfile'],
@@ -12,24 +14,26 @@ export function useGetCallerUserProfile() {
       if (!actor) throw new Error('Actor not available');
       return actor.getCallerUserProfile();
     },
-    enabled: !!actor && !actorFetching,
+    enabled: !!actor && !actorFetching && !!identity,
     retry: false,
   });
 
   return {
     ...query,
     isLoading: actorFetching || query.isLoading,
-    isFetched: !!actor && query.isFetched,
+    isFetched: !!actor && !!identity && query.isFetched,
   };
 }
 
 export function useSaveCallerUserProfile() {
   const { actor } = useActor();
+  const { identity } = useInternetIdentity();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (profile: UserProfile) => {
       if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
       return actor.saveCallerUserProfile(profile);
     },
     onSuccess: () => {
@@ -40,6 +44,7 @@ export function useSaveCallerUserProfile() {
 
 export function useListConversations() {
   const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
 
   return useQuery<ConversationSummary[]>({
     queryKey: ['conversations'],
@@ -47,17 +52,20 @@ export function useListConversations() {
       if (!actor) return [];
       return actor.listConversations();
     },
-    enabled: !!actor && !actorFetching,
+    enabled: !!actor && !actorFetching && !!identity,
+    retry: false,
   });
 }
 
 export function useCreateConversation() {
   const { actor } = useActor();
+  const { identity } = useInternetIdentity();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (title: string) => {
       if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
       return actor.createConversation(title);
     },
     onSuccess: () => {
@@ -68,6 +76,7 @@ export function useCreateConversation() {
 
 export function useGetConversationEntries(conversationId: bigint | null) {
   const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
 
   return useQuery<QueryEntry[]>({
     queryKey: ['conversationEntries', conversationId?.toString()],
@@ -75,12 +84,14 @@ export function useGetConversationEntries(conversationId: bigint | null) {
       if (!actor || conversationId === null) return [];
       return actor.getConversationEntries(conversationId);
     },
-    enabled: !!actor && !actorFetching && conversationId !== null,
+    enabled: !!actor && !actorFetching && conversationId !== null && !!identity,
+    retry: false,
   });
 }
 
 export function useAddQueryEntry() {
   const { actor } = useActor();
+  const { identity } = useInternetIdentity();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -98,6 +109,7 @@ export function useAddQueryEntry() {
       photo?: File;
     }) => {
       if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
       
       let blobRef: BlobRef | null = null;
       
@@ -124,11 +136,13 @@ export function useAddQueryEntry() {
 
 export function useDeleteConversationHistory() {
   const { actor } = useActor();
+  const { identity } = useInternetIdentity();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (conversationId: bigint) => {
       if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
       return actor.deleteConversationHistory(conversationId);
     },
     onSuccess: () => {
@@ -139,10 +153,12 @@ export function useDeleteConversationHistory() {
 
 export function useExportUserData() {
   const { actor } = useActor();
+  const { identity } = useInternetIdentity();
 
   return useMutation({
     mutationFn: async (): Promise<ExportData> => {
       if (!actor) throw new Error('Actor not available');
+      if (!identity) throw new Error('Not authenticated');
       return actor.exportUserData();
     },
   });

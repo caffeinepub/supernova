@@ -1,89 +1,66 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T01:54:59.454Z",
+  "generatedAt": "2026-02-07T03:07:30.211Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
+    "total": 3,
     "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add a visible photo-upload control to the chat composer that lets a user select one or more images (PNG/JPG/WebP), shows previews of the selected images, and allows removing an image before sending.",
+        "summary": "Prevent unauthenticated users from hitting authenticated backend methods by gating React Query hooks on Internet Identity authentication state, so the app works in anonymous/guest mode without backend traps.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/chat/types.ts",
-          "frontend/src/components/chat/ChatComposer.tsx",
-          "frontend/src/App.tsx"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/hooks/useConversationHistory.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/chat/types.ts",
-          "frontend/src/components/chat/ChatComposer.tsx",
-          "frontend/src/App.tsx"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/hooks/useConversationHistory.ts"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Support sending chat messages with optional uploaded photos, rendering the photos inline in the conversation thread for the corresponding user message (and when loading conversation history).",
+        "summary": "Add a first-class guest mode UX that lets users keep chatting without logging in, while clearly communicating that history/export/saving require login.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/App.tsx",
-          "frontend/src/components/chat/ConversationThread.tsx",
-          "frontend/src/components/chat/types.ts"
+          "frontend/src/components/history/ConversationSidebar.tsx",
+          "frontend/src/hooks/useConversationHistory.ts"
         ],
         "matchedFiles": [
           "frontend/src/App.tsx",
-          "frontend/src/components/chat/ConversationThread.tsx",
-          "frontend/src/components/chat/types.ts"
+          "frontend/src/components/history/ConversationSidebar.tsx",
+          "frontend/src/hooks/useConversationHistory.ts"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Extend the backend conversation entry model and API to store optional photo attachments per query entry, and update frontend query hooks to use the updated API when saving and fetching conversation entries.",
+        "summary": "Improve login reliability and user-facing error reporting in the header login control so failed login attempts provide actionable feedback and recovery options.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/backend.d.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/hooks/useConversationHistory.ts",
+          "frontend/src/components/auth/LoginButton.tsx",
           "frontend/src/App.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/backend.d.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/hooks/useConversationHistory.ts",
+          "frontend/src/components/auth/LoginButton.tsx",
           "frontend/src/App.tsx"
         ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Include uploaded photos in the existing user data export so exported conversation history contains the photo attachment data for each entry that has them.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
       }
     ]
   },
   "changedFiles": [
-    "backend/blob-storage/Mixin.mo",
-    "backend/blob-storage/Storage.mo",
-    "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/App.tsx",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/chat/ChatComposer.tsx",
-    "frontend/src/components/chat/ConversationThread.tsx",
-    "frontend/src/components/chat/types.ts",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
+    "frontend/src/components/auth/LoginButton.tsx",
+    "frontend/src/components/history/ConversationSidebar.tsx",
     "frontend/src/hooks/useConversationHistory.ts",
     "frontend/src/hooks/useQueries.ts",
     "project_state.json",
