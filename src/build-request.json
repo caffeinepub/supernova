@@ -1,0 +1,84 @@
+{
+  "kind": "build_request",
+  "title": "Persist multi-conversation history per user and add exportable user data download",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-6",
+      "text": "Update the Motoko backend to persist (across canister upgrades) each authenticated user’s full conversation history as multiple separate conversations, not a single aggregated list. The backend must support: creating a new conversation, listing a user’s conversations (id, title, lastUpdated), fetching a single conversation’s entries, appending a new Q/A entry to a specific conversation, and deleting a conversation.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-6",
+          "msg-10"
+        ],
+        "quotes": [
+          "I want it to remember every conversation had with it I want data to be exportable",
+          "yes"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Conversation history is preserved after a canister upgrade (i.e., stored in stable state).",
+        "A user can have more than one conversation; each conversation has a stable unique id.",
+        "Backend exposes Candid methods to: createConversation, listConversations, getConversation(conversationId), appendEntry(conversationId, question, response), deleteConversation(conversationId).",
+        "All conversation APIs enforce access control so callers can only access their own data unless admin logic already permits otherwise."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Update the frontend conversation history flow to support multiple conversations end-to-end: the sidebar must list all conversations returned by the backend; “New chat” must create and switch to a new backend conversation; sending a message must append the entry to the currently selected conversation; switching conversations must load and render that conversation’s messages.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6",
+          "msg-10"
+        ],
+        "quotes": [
+          "I want it to remember every conversation had with it I want data to be exportable",
+          "yes"
+        ]
+      },
+      "acceptanceCriteria": [
+        "When logged in, the sidebar shows multiple conversations (not just one hardcoded 'main' conversation).",
+        "Clicking “New chat” creates a new conversation that persists (appears after reload/login) and becomes the active conversation.",
+        "Sending messages stores entries into the active conversation; switching conversations shows the correct message thread for that conversation.",
+        "All user-facing text added/changed for this feature is in English."
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "text": "Add a user data export feature that allows an authenticated user to export their data (at minimum: profile + all conversations + all entries + sources) to a downloadable JSON file from the frontend. Implement a backend method that returns the export payload, and add a frontend control (e.g., in the sidebar or header) to trigger a client-side download.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-6",
+          "msg-10"
+        ],
+        "quotes": [
+          "I want it to remember every conversation had with it I want data to be exportable",
+          "yes"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend provides an authenticated API that returns the caller’s export payload containing user profile (if present) and all conversations and entries.",
+        "Frontend provides an “Export data” action visible to authenticated users that downloads a .json file without routing through any external service.",
+        "The downloaded JSON contains enough information to reconstruct: conversations, questions, summarized answers, and source fields (title/url/excerpt).",
+        "If the user is not authenticated, the export control is hidden or disabled with clear English messaging."
+      ]
+    }
+  ],
+  "constraints": [
+    "Backend must remain a single Motoko actor in backend/main.mo; add backend/migration.mo only if required for stable-state upgrade handling.",
+    "Do not edit files under frontend/src/components/ui or any paths listed as immutable in SYSTEM_CONTEXT.",
+    "No external databases or third-party storage/services for persistence or export; data must be stored in-canister and exported directly to the client."
+  ],
+  "nonGoals": [
+    "Implementing third-party sync/export destinations (e.g., Google Drive, Dropbox).",
+    "Adding real-time collaboration or sharing conversation links publicly.",
+    "Adding new LLM/AI integrations beyond the existing information retrieval flow."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-07T01:30:09.110Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 3,
+    "implemented": 2,
+    "items": [
+      {
+        "id": "REQ-6",
+        "summary": "Update the Motoko backend to persist (across canister upgrades) each authenticated user’s full conversation history as multiple separate conversations, not a single aggregated list. The backend must support: creating a new conversation, listing a user’s conversations (id, title, lastUpdated), fetching a single conversation’s entries, appending a new Q/A entry to a specific conversation, and deleting a conversation.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-7",
+        "summary": "Update the frontend conversation history flow to support multiple conversations end-to-end: the sidebar must list all conversations returned by the backend; “New chat” must create and switch to a new backend conversation; sending a message must append the entry to the currently selected conversation; switching conversations must load and render that conversation’s messages.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/hooks/useConversationHistory.ts",
+          "frontend/src/components/history/ConversationSidebar.tsx",
+          "frontend/src/App.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/hooks/useConversationHistory.ts",
+          "frontend/src/components/history/ConversationSidebar.tsx",
+          "frontend/src/App.tsx"
+        ]
+      },
+      {
+        "id": "REQ-8",
+        "summary": "Add a user data export feature that allows an authenticated user to export their data (at minimum: profile + all conversations + all entries + sources) to a downloadable JSON file from the frontend. Implement a backend method that returns the export payload, and add a frontend control (e.g., in the sidebar or header) to trigger a client-side download.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/utils/downloadJson.ts",
+          "frontend/src/components/history/ConversationSidebar.tsx",
+          "frontend/src/App.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/utils/downloadJson.ts",
+          "frontend/src/components/history/ConversationSidebar.tsx",
+          "frontend/src/App.tsx"
+        ]
+      }
+    ]
+  },
+  "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
+    "build-request.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/src/App.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/history/ConversationSidebar.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useConversationHistory.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/utils/downloadJson.ts",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}

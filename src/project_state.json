@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "New project",
+  "architectural_notes": [
+    "Add persistent storage for conversation history per user (privacy/security considerations).",
+    "Provide a data export mechanism (e.g., downloadable file format) for user conversation history."
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-update-the-frontend-conversation-history-flow-to-support-multiple-conversations-end-to-end-the-sidebar-must-list-all-conversations-returned-by-the-backend-new-chat-must-create-and-switch-to-a-new-backend-conversation-sending-a-message-must-append-the-entry-to-the-currently-selected-conversation-switching-conversations-must-load-and-render-that-conversation-s-messages",
+      "title": "Update the frontend conversation history flow to support multiple conversations end-to-end: the sidebar must list all conversations returned by the backend; “New chat” must create and switch to a new backend conversation; sending a message must append the entry to the currently selected conversation; switching conversations must load and render that conversation’s messages.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-user-data-export-feature-that-allows-an-authenticated-user-to-export-their-data-at-minimum-profile-all-conversations-all-entries-sources-to-a-downloadable-json-file-from-the-frontend-implement-a-backend-method-that-returns-the-export-payload-and-add-a-frontend-control-e-g-in-the-sidebar-or-header-to-trigger-a-client-side-download",
+      "title": "Add a user data export feature that allows an authenticated user to export their data (at minimum: profile + all conversations + all entries + sources) to a downloadable JSON file from the frontend. Implement a backend method that returns the export payload, and add a frontend control (e.g., in the sidebar or header) to trigger a client-side download.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Persist and remember every conversation a user has with the app (conversation history/memory).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Allow users to export their conversation data (data export functionality).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Update the Motoko backend to persist (across canister upgrades) each authenticated user’s full conversation history as multiple separate conversations, not a single aggregated list. The backend must support: creating a new conversation, listing a user’s conversations (id, title, lastUpdated), fetching a single conversation’s entries, appending a new Q/A entry to a specific conversation, and deleting a conversation.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Persist multi-conversation history per user and add exportable user data download",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

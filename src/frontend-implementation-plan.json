@@ -1,0 +1,71 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Multi-conversation per-user history and exportable user data (frontend)",
+  "requirements": [
+    {
+      "id": "REQ-7",
+      "summary": "Update the chat history UI and state to support multiple backend conversations (list/create/switch/append) end-to-end.",
+      "acceptanceCriteria": [
+        "When logged in, the sidebar shows multiple conversations (not just one hardcoded 'main' conversation).",
+        "Clicking “New chat” creates a new conversation that persists (appears after reload/login) and becomes the active conversation.",
+        "Sending messages stores entries into the active conversation; switching conversations shows the correct message thread for that conversation.",
+        "All user-facing text added/changed for this feature is in English."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Replace the legacy single-thread history hooks with React Query hooks backed by the new multi-conversation backend capabilities: listConversations, createConversation, getConversationEntries, addQueryEntry, and deleteConversationHistory (if needed by UI). Ensure query keys include conversation id and invalidate the conversation list/entries appropriately after mutations. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useConversationHistory.ts",
+          "operation": "modify",
+          "description": "Refactor conversation state management to: keep an active conversation id (bigint), load conversation summaries for the sidebar, load entries for the active conversation on switch, and ensure startNewConversation creates a backend conversation and immediately activates it. Update saveEntry to append to the active conversation via addQueryEntry. Clear local conversation state when unauthenticated. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/history/ConversationSidebar.tsx",
+          "operation": "modify",
+          "description": "Update types to match backend conversation summaries (id: bigint, title, lastUpdated) and display multiple conversations from listConversations. Ensure the selected state uses the active bigint id, and keep English empty-state text. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire the updated multi-conversation flow into the app: pass backend conversation summaries into ConversationSidebar, ensure “New chat” triggers backend create+switch, ensure switching loads and renders entries for that conversation, and ensure sending a message appends to the active conversation. Keep all new/changed user-facing text in English. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "summary": "Add an authenticated 'Export data' action in the UI that downloads the user’s export payload as a local JSON file.",
+      "acceptanceCriteria": [
+        "Backend provides an authenticated API that returns the caller’s export payload containing user profile (if present) and all conversations and entries.",
+        "Frontend provides an “Export data” action visible to authenticated users that downloads a .json file without routing through any external service.",
+        "The downloaded JSON contains enough information to reconstruct: conversations, questions, summarized answers, and source fields (title/url/excerpt).",
+        "If the user is not authenticated, the export control is hidden or disabled with clear English messaging."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add a React Query hook/mutation that calls the backend exportUserData capability and returns the ExportData payload typed from frontend/src/backend.d.ts. Ensure authorization failures are handled cleanly by the caller. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/utils/downloadJson.ts",
+          "operation": "create",
+          "description": "Add a small utility to trigger a client-side download of a JSON blob with a sensible filename (e.g., includes date), without using any external services. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/history/ConversationSidebar.tsx",
+          "operation": "modify",
+          "description": "Add an “Export data” control visible only when the user is authenticated; when unauthenticated, hide it or show a disabled state with clear English messaging (per requirement). Wire it to a callback prop so the parent can run export + download. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Implement the export action handler: when authenticated, call exportUserData via the new hook, then download as .json using the downloadJson utility. Ensure UI surfaces failures gracefully in English (e.g., toast/alert) and that the control is hidden/disabled when not authenticated. Verify the component's usage instructions before implementing."
+        }
+      ]
+    }
+  ]
+}

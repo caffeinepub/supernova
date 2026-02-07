@@ -1,0 +1,79 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-07T01:30:09.107Z",
+  "summary": "Multi-conversation support and a client-side JSON download utility were added, with frontend wiring for listing/creating/switching conversations and triggering export. However, several backend API naming/signature mismatches vs the requested Candid methods are evident, and stable-state persistence across upgrades is not clearly implemented from the provided diff excerpt. The diff also appears to include multiple UI/UX and extra feature changes not requested by the BuildRequest.",
+  "missing_requirements": [
+    {
+      "id": "REQ-6",
+      "requirement": "Backend exposes Candid methods named exactly: createConversation, listConversations, getConversation(conversationId), appendEntry(conversationId, question, response), deleteConversation(conversationId).",
+      "reason": "The diff shows different method names being used/exposed (e.g., getConversationEntries, addQueryEntry, deleteConversationHistory). This does not match the required API surface as specified.",
+      "evidence": [
+        "backend/main.mo",
+        "frontend/src/hooks/useQueries.ts"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "requirement": "Conversation history is preserved after a canister upgrade (i.e., stored in stable state).",
+      "reason": "The diff excerpt shows in-memory maps initialized with `let userConversations = Map.empty...` / `let userProfiles = Map.empty...` and a migration hook, but does not show `stable` variables or preupgrade/postupgrade handling. With truncation, stable persistence is not evidenced.",
+      "evidence": [
+        "backend/main.mo",
+        "backend/migration.mo"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "requirement": "Backend supports deleting a conversation via deleteConversation(conversationId).",
+      "reason": "Frontend is calling `actor.deleteConversationHistory(conversationId)` which suggests the backend deletion method is named differently than required; the required `deleteConversation` method is not evidenced in the diff excerpt.",
+      "evidence": [
+        "frontend/src/hooks/useQueries.ts",
+        "backend/main.mo"
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "requirement": "Switching conversations must load and render that conversation’s messages end-to-end using a backend method to fetch a single conversation (getConversation).",
+      "reason": "Frontend loads entries via `getConversationEntries(conversationId)` rather than fetching a single conversation via `getConversation(conversationId)` as specified. The specified backend method name is not evidenced.",
+      "evidence": [
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/hooks/useConversationHistory.ts"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Added/modified speech recognition and speech synthesis features (Web Speech API hooks).",
+      "reason": "Not requested by REQ-6/7/8; BuildRequest is focused on multi-conversation persistence and export only.",
+      "evidence": [
+        "frontend-file-summaries.txt"
+      ]
+    },
+    {
+      "description": "Major UI restyling changes (OKLCH color system change, font stack changes, ChatGPT-like appearance, new empty state layout).",
+      "reason": "Not requested by REQ-6/7/8 and unrelated to conversation persistence/export requirements.",
+      "evidence": [
+        "frontend-file-summaries.txt"
+      ]
+    },
+    {
+      "description": "Changes to information retrieval behavior (Wikipedia and DuckDuckGo APIs, partial failure handling).",
+      "reason": "BuildRequest explicitly says no new LLM/AI integrations beyond the existing information retrieval flow; these appear as functional changes beyond the requested history/export features.",
+      "evidence": [
+        "frontend-file-summaries.txt"
+      ]
+    }
+  ],
+  "confidence": 0.62,
+  "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
+    "frontend-file-summaries.txt",
+    "frontend/src/App.tsx",
+    "frontend/src/components/history/ConversationSidebar.tsx",
+    "frontend/src/hooks/useConversationHistory.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/utils/downloadJson.ts",
+    "project_state.json"
+  ]
+}
