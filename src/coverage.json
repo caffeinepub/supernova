@@ -1,54 +1,39 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T03:07:30.211Z",
+  "generatedAt": "2026-02-07T03:13:48.011Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 2,
+    "implemented": 2,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Prevent unauthenticated users from hitting authenticated backend methods by gating React Query hooks on Internet Identity authentication state, so the app works in anonymous/guest mode without backend traps.",
+        "summary": "When the user asks a cooking question (e.g., \"how to bake cookies\"), generate a structured, plain-English answer that is maximally helpful for a broad audience, using clear sections and step-by-step instructions rather than returning raw or loosely extracted snippets.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/hooks/useConversationHistory.ts"
+          "frontend/src/utils/cooking.ts",
+          "frontend/src/hooks/useInformationRetrieval.ts"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/hooks/useConversationHistory.ts"
+          "frontend/src/utils/cooking.ts",
+          "frontend/src/hooks/useInformationRetrieval.ts"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Add a first-class guest mode UX that lets users keep chatting without logging in, while clearly communicating that history/export/saving require login.",
+        "summary": "Enhance the cooking-response formatter so that extracted content is cleaned and normalized for readability (remove partial keyword context, avoid mid-sentence clipping, and avoid duplicating boilerplate), while preserving the existing ConversationThread structured-cooking rendering behavior.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/src/components/history/ConversationSidebar.tsx",
-          "frontend/src/hooks/useConversationHistory.ts"
+          "frontend/src/utils/textCleanup.ts",
+          "frontend/src/utils/cooking.ts"
         ],
         "matchedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/src/components/history/ConversationSidebar.tsx",
-          "frontend/src/hooks/useConversationHistory.ts"
-        ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Improve login reliability and user-facing error reporting in the header login control so failed login attempts provide actionable feedback and recovery options.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/auth/LoginButton.tsx",
-          "frontend/src/App.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/auth/LoginButton.tsx",
-          "frontend/src/App.tsx"
+          "frontend/src/utils/textCleanup.ts",
+          "frontend/src/utils/cooking.ts"
         ]
       }
     ]
@@ -58,11 +43,9 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/App.tsx",
-    "frontend/src/components/auth/LoginButton.tsx",
-    "frontend/src/components/history/ConversationSidebar.tsx",
-    "frontend/src/hooks/useConversationHistory.ts",
-    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/hooks/useInformationRetrieval.ts",
+    "frontend/src/utils/cooking.ts",
+    "frontend/src/utils/textCleanup.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

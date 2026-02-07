@@ -2,7 +2,7 @@
   "frontend/src/App.tsx": "Main application component with guest mode support (unlimited chatting without login), auth-gated features (history/export), guest session preservation on login, and improved UX with guest badge and login prompts.",
   "frontend/src/hooks/useQueries.ts": "React Query hooks for all backend operations with authentication gating - all authenticated queries check for identity presence and use retry: false to prevent unauthorized backend calls.",
   "frontend/src/hooks/useConversationHistory.ts": "Manages active conversation state with authentication awareness - only loads/saves conversations when authenticated, clears state on logout, and silently skips saving for guest sessions.",
-  "frontend/src/hooks/useInformationRetrieval.ts": "Enhanced hook that fetches multiple results from Wikipedia (up to 3) and DuckDuckGo (abstract + up to 3 related topics), detects cooking queries, and formats responses accordingly with proper error handling.",
+  "frontend/src/hooks/useInformationRetrieval.ts": "Information retrieval hook with improved cooking query handling that provides helpful fallback responses even when retrieval fails, while maintaining structured output format.",
   "frontend/src/hooks/useSpeechRecognition.ts": "Web Speech API hook for speech-to-text functionality with continuous recognition, interim results, error handling, and browser compatibility detection.",
   "frontend/src/hooks/useSpeechSynthesis.ts": "Hardened Web Speech API hook for text-to-speech with improved error handling, state management, and graceful fallback for unsupported browsers.",
   "frontend/src/utils/summarize.ts": "Utility function that combines text snippets from multiple sources into coherent summaries by extracting key sentences.",
@@ -17,7 +17,8 @@
   "frontend/src/components/chat/ChatEmptyState.tsx": "Welcome screen with updated example prompts for cookies/cooking and web search, using appropriate icons (Cookie, Globe, MessageSquare) and updated capabilities list.",
   "frontend/src/utils/downloadJson.ts": "Client-side utility that triggers JSON file downloads with timestamped filenames without using external services.",
   "frontend/src/components/chat/types.ts": "Shared TypeScript types for chat messages including MessageMode, PhotoAttachment interface for image attachments, and Message interface with optional photos array.",
-  "frontend/src/utils/cooking.ts": "Client-side utilities to detect cooking/recipe prompts and format structured responses with Ingredients, Steps, and Tips sections.",
+  "frontend/src/utils/cooking.ts": "Enhanced cooking response formatter with robust cookie-baking fallback template, improved section extraction (Ingredients/Steps/Tips), text cleanup integration, and structured list formatting for steps.",
   "frontend/src/hooks/useVoiceResponseMode.ts": "Custom hook that manages voice response mode state (off, voice-text, voice-only) with localStorage persistence.",
-  "frontend/src/components/settings/VoiceSettingsDialog.tsx": "Dialog component for selecting voice response mode with radio buttons and browser compatibility warnings."
+  "frontend/src/components/settings/VoiceSettingsDialog.tsx": "Dialog component for selecting voice response mode with radio buttons and browser compatibility warnings.",
+  "frontend/src/utils/textCleanup.ts": "Utility functions for cleaning and normalizing retrieved text snippets, including HTML artifact removal, sentence boundary trimming, deduplication, and boilerplate removal."
 }

@@ -1,34 +1,24 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
+  "summary": "AI assistant app focused on accessibility for disabled users, including an optional autistic-friendly communication mode and clear, plain-language answers that are easy for anyone to understand.",
   "architectural_notes": [],
-  "known_issues": [
-    "Login/authentication is not working properly; users cannot log in or use the app automatically as expected"
-  ],
-  "isFixRequest": true,
+  "known_issues": [],
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-prevent-unauthenticated-users-from-hitting-authenticated-backend-methods-by-gating-react-query-hooks-on-internet-identity-authentication-state-so-the-app-works-in-anonymous-guest-mode-without-backend-traps",
-      "title": "Prevent unauthenticated users from hitting authenticated backend methods by gating React Query hooks on Internet Identity authentication state, so the app works in anonymous/guest mode without backend traps.",
+      "id": "feature-when-the-user-asks-a-cooking-question-e-g-how-to-bake-cookies-generate-a-structured-plain-english-answer-that-is-maximally-helpful-for-a-broad-audience-using-clear-sections-and-step-by-step-instructions-rather-than-returning-raw-or-loosely-extracted-snippets",
+      "title": "When the user asks a cooking question (e.g., \"how to bake cookies\"), generate a structured, plain-English answer that is maximally helpful for a broad audience, using clear sections and step-by-step instructions rather than returning raw or loosely extracted snippets.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-first-class-guest-mode-ux-that-lets-users-keep-chatting-without-logging-in-while-clearly-communicating-that-history-export-saving-require-login",
-      "title": "Add a first-class guest mode UX that lets users keep chatting without logging in, while clearly communicating that history/export/saving require login.",
+      "id": "feature-enhance-the-cooking-response-formatter-so-that-extracted-content-is-cleaned-and-normalized-for-readability-remove-partial-keyword-context-avoid-mid-sentence-clipping-and-avoid-duplicating-boilerplate-while-preserving-the-existing-conversationthread-structured-cooking-rendering-behavior",
+      "title": "Enhance the cooking-response formatter so that extracted content is cleaned and normalized for readability (remove partial keyword context, avoid mid-sentence clipping, and avoid duplicating boilerplate), while preserving the existing ConversationThread structured-cooking rendering behavior.",
       "reqIds": [
         "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-improve-login-reliability-and-user-facing-error-reporting-in-the-header-login-control-so-failed-login-attempts-provide-actionable-feedback-and-recovery-options",
-      "title": "Improve login reliability and user-facing error reporting in the header login control so failed login attempts provide actionable feedback and recovery options.",
-      "reqIds": [
-        "REQ-3"
       ],
       "version": 1
     }
@@ -36,12 +26,24 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add user authentication (login) and/or automatic sign-in/guest access so the app can be used without manual login issues",
+      "summary": "Add accessibility-focused features to assist disabled users (e.g., voice input/output, text-to-speech, and other assistive interactions)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Provide an optional autistic-friendly communication mode (direct, literal, low-ambiguity, structured responses) that users can switch on/off",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Ensure answers are maximally helpful while remaining easy for anyone to understand (clear step-by-step plain-language explanations, e.g., for questions like baking cookies)",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Fix login flow and enable guest usage when Internet Identity is unavailable",
+  "projectName": "Improve cooking answers to be maximally helpful and easy to understand (e.g., baking cookies)",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

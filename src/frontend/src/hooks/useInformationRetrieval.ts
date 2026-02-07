@@ -47,18 +47,29 @@ export function useInformationRetrieval() {
         failureCount++;
       }
 
+      // Check if this is a cooking query
+      const isCooking = isCookingPrompt(query);
+
+      // For cooking queries, even with no sources, we can provide a helpful response
       if (sources.length === 0) {
+        if (isCooking) {
+          // formatCookingResponse handles empty snippets with fallback
+          const summarizedAnswer = formatCookingResponse(snippets, query);
+          return {
+            summarizedAnswer,
+            sources: []
+          };
+        }
         throw new Error('Unable to retrieve information from any source');
       }
 
-      if (failureCount > 0) {
+      if (failureCount > 0 && !isCooking) {
         setPartialFailureWarning(
           `Some information sources were unavailable. Results may be incomplete.`
         );
       }
 
-      // Check if this is a cooking query and format accordingly
-      const isCooking = isCookingPrompt(query);
+      // Format response based on query type
       const summarizedAnswer = isCooking 
         ? formatCookingResponse(snippets, query)
         : summarizeResults(query, snippets);

@@ -1,73 +1,48 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix auth gating, guest mode UX, and resilient Internet Identity login feedback",
+  "title": "Improve structured cooking answers and snippet cleanup",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Gate authenticated React Query calls on Internet Identity state to prevent unauthorized backend traps and retries in guest mode.",
+      "summary": "Generate a structured, plain-English cooking guide (with Ingredients/Steps/Tips) and robust cookie-baking fallback when retrieval text is not cleanly extractable.",
       "acceptanceCriteria": [
-        "When not logged in, the app does not call backend methods that require user permissions (e.g., getCallerUserProfile, listConversations, getConversationEntries, exportUserData) and does not show uncaught errors due to backend authorization traps.",
-        "When logged in, all existing authenticated queries and mutations still work (profile, conversation history, saving entries, export).",
-        "React Query does not repeatedly retry unauthorized calls in the background when the user is not authenticated."
+        "For the prompt \"How do I bake cookies?\", the assistant response includes clearly labeled sections using the existing rendering convention (e.g., **Ingredients:**, **Steps:**, **Tips:**).",
+        "The \"Steps\" section is output as an ordered list with short, concrete steps (one action per step where possible).",
+        "The answer includes key cookie-baking specifics in plain language (at minimum: oven temperature guidance, approximate bake time range, and doneness cues), without requiring the user to read the linked sources.",
+        "If information retrieval snippets do not contain cleanly extractable ingredients/steps, the app still produces a helpful cookie-baking guide instead of falling back to an unstructured excerpt."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useQueries.ts",
+          "path": "frontend/src/utils/cooking.ts",
           "operation": "modify",
-          "description": "Use the authorization component guidance to ensure authenticated backend calls only run when Internet Identity is present (gate `enabled` for authenticated queries; add `retry: false`/controlled retry behavior for auth-protected queries). Verify the component's usage instructions before implementing."
+          "description": "Revise formatCookingResponse to always produce structured output for cooking prompts (using **Ingredients:**/**Steps:**/**Tips:** section markers that ConversationThread.tsx already recognizes). Add a cookie-baking-specific fallback template for queries about cookies that includes oven temperature guidance, bake time range, and doneness cues; ensure Steps are emitted as an ordered list with one action per step where possible."
         },
         {
-          "path": "frontend/src/hooks/useConversationHistory.ts",
+          "path": "frontend/src/hooks/useInformationRetrieval.ts",
           "operation": "modify",
-          "description": "Ensure conversation-history fetching and mutations are only triggered when authenticated, and avoid indirect triggers that could cause authenticated queries to run while unauthenticated (align with auth gating changes). Use authorization component guidance for handling auth-protected data flow; verify the component's usage instructions before implementing."
+          "description": "Ensure cooking prompts reliably route through the improved formatCookingResponse and that cooking responses remain structured even when retrieval is sparse (e.g., only one source succeeds), without changing the existing ConversationThread structured-cooking rendering behavior."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Add first-class guest UX: allow unlimited chatting without login while clearly labeling Guest and restricting history/export/saving to authenticated sessions without disrupting a guest session on mid-session login.",
+      "summary": "Clean and normalize retrieved cooking text to remove truncation artifacts, clipped fragments, and boilerplate duplication while preserving ConversationThread section-marker parsing.",
       "acceptanceCriteria": [
-        "Unauthenticated users can continue sending messages beyond the current limit without being blocked by the composer disabled state.",
-        "The UI clearly labels the session as Guest when not authenticated, and indicates which features require login (history sidebar, saving conversation, exporting data).",
-        "If a guest user logs in mid-session, the current on-screen chat remains usable (no blank screen / no crash), and the app continues with authenticated features available."
+        "Cooking answers do not include truncated fragments like partial words/HTML artifacts, and do not include large verbatim blocks when structured output is available.",
+        "The output continues to use the same section markers that ConversationThread.tsx already detects (e.g., '**Ingredients:**' and '**Steps:**'), so the UI renders sections correctly.",
+        "For cooking prompts, the response remains understandable even if only one source returns results (partial failure)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Remove the guest message-limit gating that disables the composer; add clear Guest labeling in the header and UI messaging that history/export/saving require login; adjust message hydration logic so a mid-session login does not wipe/replace the current guest chat unless the user explicitly navigates to history. Use authorization component guidance for separating guest vs authenticated feature access; verify the component's usage instructions before implementing."
+          "path": "frontend/src/utils/textCleanup.ts",
+          "operation": "create",
+          "description": "Add small, reusable text-cleanup utilities for retrieval snippets (e.g., stripping HTML artifacts, normalizing whitespace/punctuation, removing repeated boilerplate lines, and trimming to sentence boundaries to avoid mid-sentence clipping)."
         },
         {
-          "path": "frontend/src/components/history/ConversationSidebar.tsx",
+          "path": "frontend/src/utils/cooking.ts",
           "operation": "modify",
-          "description": "Support a guest-mode sidebar state (or equivalent UI) that explains history/export require login and disables or converts actions into a login prompt while still allowing the main chat UI to function. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/useConversationHistory.ts",
-          "operation": "modify",
-          "description": "Prevent automatic selection/loading of authenticated conversation history from implicitly overwriting the in-memory guest chat on initial login; only hydrate chat from history on explicit user action (e.g., selecting a conversation/new chat after login). Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Improve login reliability and error reporting in the header login control with actionable recovery and no auth loops.",
-      "acceptanceCriteria": [
-        "If Internet Identity login fails (including the \"User is already authenticated\" path), the user sees an English error message (toast and/or inline) with a clear next step (e.g., retry login, logout then login).",
-        "The login button shows a stable loading state during login and returns to an appropriate idle state afterward.",
-        "No infinite login/logout loop occurs when the hook reports \"User is already authenticated\"."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/auth/LoginButton.tsx",
-          "operation": "modify",
-          "description": "Add user-facing error reporting (toast and/or inline) for Internet Identity failures; handle \"User is already authenticated\" with a single controlled recovery attempt (e.g., clear then retry once) and provide actionable next steps (retry, logout then login) while maintaining a stable loading state. Use authorization component guidance for clearing cached application data on logout; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Ensure global auth UX messaging aligns with improved login feedback (e.g., guest vs logged-in indicators) and avoids any unintended re-render loops during auth transitions. Verify the component's usage instructions before implementing."
+          "description": "Integrate text cleanup/normalization into the cooking formatter: pre-clean snippets before combining, deduplicate near-identical lines, avoid returning large verbatim blocks, and improve section extraction so Ingredients/Steps/Tips are readable (no partial keyword context) while keeping the exact section markers expected by ConversationThread.tsx."
         }
       ]
     }

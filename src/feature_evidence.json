@@ -2,11 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-prevent-unauthenticated-users-from-hitting-authenticated-backend-methods-by-gating-react-query-hooks-on-internet-identity-authentication-state-so-the-app-works-in-anonymous-guest-mode-without-backend-traps",
-      "featureTitle": "Prevent unauthenticated users from hitting authenticated backend methods by gating React Query hooks on Internet Identity authentication state, so the app works in anonymous/guest mode without backend traps.",
+      "featureId": "feature-when-the-user-asks-a-cooking-question-e-g-how-to-bake-cookies-generate-a-structured-plain-english-answer-that-is-maximally-helpful-for-a-broad-audience-using-clear-sections-and-step-by-step-instructions-rather-than-returning-raw-or-loosely-extracted-snippets",
+      "featureTitle": "When the user asks a cooking question (e.g., \"how to bake cookies\"), generate a structured, plain-English answer that is maximally helpful for a broad audience, using clear sections and step-by-step instructions rather than returning raw or loosely extracted snippets.",
       "files": [
-        "frontend/src/hooks/useConversationHistory.ts",
-        "frontend/src/hooks/useQueries.ts"
+        "frontend/src/hooks/useInformationRetrieval.ts",
+        "frontend/src/utils/cooking.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -23,12 +23,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-first-class-guest-mode-ux-that-lets-users-keep-chatting-without-logging-in-while-clearly-communicating-that-history-export-saving-require-login",
-      "featureTitle": "Add a first-class guest mode UX that lets users keep chatting without logging in, while clearly communicating that history/export/saving require login.",
+      "featureId": "feature-enhance-the-cooking-response-formatter-so-that-extracted-content-is-cleaned-and-normalized-for-readability-remove-partial-keyword-context-avoid-mid-sentence-clipping-and-avoid-duplicating-boilerplate-while-preserving-the-existing-conversationthread-structured-cooking-rendering-behavior",
+      "featureTitle": "Enhance the cooking-response formatter so that extracted content is cleaned and normalized for readability (remove partial keyword context, avoid mid-sentence clipping, and avoid duplicating boilerplate), while preserving the existing ConversationThread structured-cooking rendering behavior.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/history/ConversationSidebar.tsx",
-        "frontend/src/hooks/useConversationHistory.ts"
+        "frontend/src/utils/cooking.ts",
+        "frontend/src/utils/textCleanup.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -41,27 +40,6 @@
       ],
       "testIds": [
         "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-improve-login-reliability-and-user-facing-error-reporting-in-the-header-login-control-so-failed-login-attempts-provide-actionable-feedback-and-recovery-options",
-      "featureTitle": "Improve login reliability and user-facing error reporting in the header login control so failed login attempts provide actionable feedback and recovery options.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/auth/LoginButton.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
       ],
       "confidence": "high"
     }

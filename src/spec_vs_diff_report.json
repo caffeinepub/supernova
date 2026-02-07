@@ -1,37 +1,53 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T03:07:30.208Z",
-  "summary": "Diff implements authentication gating in several React Query hooks and improves LoginButton error handling/recovery. Guest-mode UX is partially evidenced (history sidebar shows login-required prompt), but key guest-mode acceptance criteria and export gating cannot be fully confirmed from the truncated diff.",
-  "missing_requirements": [
+  "generatedAt": "2026-02-07T03:13:48.008Z",
+  "summary": "REQ-1 and REQ-2 appear to be implemented via a structured cooking response formatter with a cookie-baking fallback template, plus new snippet cleanup/normalization utilities and improved partial-failure handling for cooking queries. However, the diff summary also introduces multiple unrelated product features (guest mode, speech I/O, UI restyling, photo upload, etc.) that were not requested in the BuildRequest.",
+  "missing_requirements": [],
+  "hallucinated_features": [
     {
-      "id": "REQ-1",
-      "requirement": "Gate all authenticated backend calls (including exportUserData) on Internet Identity auth state so unauthenticated users do not trigger authorization traps or background retries.",
-      "reason": "Auth gating is shown for getCallerUserProfile/listConversations/getConversationEntries and mutations, but the diff snippet is truncated before showing the implementation of useExportUserData/exportUserData gating; cannot confirm export is gated and retry-disabled.",
+      "description": "Guest mode support and auth-gated history/export UX changes",
+      "reason": "Not requested; BuildRequest focuses only on improving cooking answers/formatting and includes constraints about not changing auth behavior.",
       "evidence": [
-        "frontend/src/hooks/useQueries.ts (truncated)",
-        "frontend/src/App.tsx (imports useExportUserData)"
+        "frontend-file-summaries.txt (App.tsx: guest mode support; ConversationSidebar: login prompt for history/export)",
+        "project_state.json (overall app direction notes unrelated to cooking formatting)"
       ]
     },
     {
-      "id": "REQ-2",
-      "requirement": "Unauthenticated users can continue sending messages beyond the current limit without being blocked by the composer disabled state; UI labels session as Guest and indicates which features require login; guest session remains usable after mid-session login.",
-      "reason": "There is evidence the history sidebar is blocked with a login-required message when unauthenticated, and App tracks an isGuestSession state, but the truncated App diff does not show ChatComposer props/state changes, a visible 'Guest' label/badge, or the mid-session login behavior handling. Therefore the full guest-mode UX acceptance criteria cannot be confirmed from provided evidence.",
+      "description": "Speech recognition and speech synthesis (voice input/output) features",
+      "reason": "Not requested; BuildRequest is specifically about cooking answer structure and snippet cleanup, and explicitly lists non-goals around new AI/real-time features (though speech isn't mentioned, it's still out of scope).",
       "evidence": [
-        "frontend/src/App.tsx (truncated: isGuestSession state + effect)",
-        "frontend/src/components/history/ConversationSidebar.tsx (unauthenticated login-required UI)"
+        "frontend-file-summaries.txt (useSpeechRecognition.ts, useSpeechSynthesis.ts)"
+      ]
+    },
+    {
+      "description": "Photo upload and inline photo rendering in chat UI",
+      "reason": "Not requested; outside cooking-answer formatting scope.",
+      "evidence": [
+        "frontend-file-summaries.txt (ConversationThread.tsx: inline photo rendering; ChatComposer.tsx: photo upload with previews; components/chat/types.ts: PhotoAttachment)"
+      ]
+    },
+    {
+      "description": "Major UI theming changes (OKLCH color system, font stack, shadows) and updated empty state/capabilities dialog content",
+      "reason": "Not requested; BuildRequest does not mention visual redesign.",
+      "evidence": [
+        "frontend-file-summaries.txt (index.css color system; tailwind.config.js font stack; ChatEmptyState.tsx updated prompts; CapabilitiesDialog.tsx updated dialog)"
+      ]
+    },
+    {
+      "description": "New client-side JSON download utility",
+      "reason": "Not requested; outside cooking-answer improvements.",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/utils/downloadJson.ts)"
       ]
     }
   ],
-  "hallucinated_features": [],
-  "confidence": 0.64,
+  "confidence": 0.62,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
-    "frontend/src/components/auth/LoginButton.tsx",
-    "frontend/src/components/history/ConversationSidebar.tsx",
-    "frontend/src/hooks/useConversationHistory.ts",
-    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/hooks/useInformationRetrieval.ts",
+    "frontend/src/utils/cooking.ts",
+    "frontend/src/utils/textCleanup.ts",
     "project_state.json"
   ]
 }

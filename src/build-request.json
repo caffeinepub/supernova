@@ -1,71 +1,55 @@
 {
   "kind": "build_request",
-  "title": "Fix login flow and enable guest usage when Internet Identity is unavailable",
-  "priority": "high",
+  "title": "Improve cooking answers to be maximally helpful and easy to understand (e.g., baking cookies)",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Prevent unauthenticated users from hitting authenticated backend methods by gating React Query hooks on Internet Identity authentication state, so the app works in anonymous/guest mode without backend traps.",
+      "text": "When the user asks a cooking question (e.g., \"how to bake cookies\"), generate a structured, plain-English answer that is maximally helpful for a broad audience, using clear sections and step-by-step instructions rather than returning raw or loosely extracted snippets.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-user-1"
         ],
         "quotes": [
-          "this shits not working properly I need to be able to login or use automatically"
+          "yes when I ask how to bake cookies I want it to respond in the smartest way it can you anyone to understand"
         ]
       },
       "acceptanceCriteria": [
-        "When not logged in, the app does not call backend methods that require user permissions (e.g., getCallerUserProfile, listConversations, getConversationEntries, exportUserData) and does not show uncaught errors due to backend authorization traps.",
-        "When logged in, all existing authenticated queries and mutations still work (profile, conversation history, saving entries, export).",
-        "React Query does not repeatedly retry unauthorized calls in the background when the user is not authenticated."
+        "For the prompt \"How do I bake cookies?\", the assistant response includes clearly labeled sections using the existing rendering convention (e.g., **Ingredients:**, **Steps:**, **Tips:**).",
+        "The \"Steps\" section is output as an ordered list with short, concrete steps (one action per step where possible).",
+        "The answer includes key cookie-baking specifics in plain language (at minimum: oven temperature guidance, approximate bake time range, and doneness cues), without requiring the user to read the linked sources.",
+        "If information retrieval snippets do not contain cleanly extractable ingredients/steps, the app still produces a helpful cookie-baking guide instead of falling back to an unstructured excerpt."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add a first-class guest mode UX that lets users keep chatting without logging in, while clearly communicating that history/export/saving require login.",
+      "text": "Enhance the cooking-response formatter so that extracted content is cleaned and normalized for readability (remove partial keyword context, avoid mid-sentence clipping, and avoid duplicating boilerplate), while preserving the existing ConversationThread structured-cooking rendering behavior.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-user-1"
         ],
         "quotes": [
-          "I need to be able to login or use automatically"
+          "yes when I ask how to bake cookies I want it to respond in the smartest way it can you anyone to understand"
         ]
       },
       "acceptanceCriteria": [
-        "Unauthenticated users can continue sending messages beyond the current limit without being blocked by the composer disabled state.",
-        "The UI clearly labels the session as Guest when not authenticated, and indicates which features require login (history sidebar, saving conversation, exporting data).",
-        "If a guest user logs in mid-session, the current on-screen chat remains usable (no blank screen / no crash), and the app continues with authenticated features available."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Improve login reliability and user-facing error reporting in the header login control so failed login attempts provide actionable feedback and recovery options.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-6"
-        ],
-        "quotes": [
-          "this shits not working properly I need to be able to login or use automatically"
-        ]
-      },
-      "acceptanceCriteria": [
-        "If Internet Identity login fails (including the \"User is already authenticated\" path), the user sees an English error message (toast and/or inline) with a clear next step (e.g., retry login, logout then login).",
-        "The login button shows a stable loading state during login and returns to an appropriate idle state afterward.",
-        "No infinite login/logout loop occurs when the hook reports \"User is already authenticated\"."
+        "Cooking answers do not include truncated fragments like partial words/HTML artifacts, and do not include large verbatim blocks when structured output is available.",
+        "The output continues to use the same section markers that ConversationThread.tsx already detects (e.g., '**Ingredients:**' and '**Steps:**'), so the UI renders sections correctly.",
+        "For cooking prompts, the response remains understandable even if only one source returns results (partial failure)."
       ]
     }
   ],
   "constraints": [
-    "Do not edit immutable frontend paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, and frontend/src/components/ui/*.",
-    "Backend must remain a single Motoko actor in backend/main.mo."
+    "Do not edit files under frontend/src/components/ui (shadcn components are read-only).",
+    "Do not modify immutable authentication/actor hooks paths listed in SYSTEM_CONTEXT (compose them instead).",
+    "Backend remains single-actor (all Motoko logic in backend/main.mo); no new backend services."
   ],
   "nonGoals": [
-    "Adding third-party authentication providers (only Internet Identity is supported).",
-    "Adding an external database or any non-IC persistence for guest data beyond local browser storage.",
-    "Building real-time features (websockets/chat)."
+    "Adding new third-party LLM integrations or external AI services.",
+    "Implementing new real-time features (e.g., WebSockets/chat).",
+    "Changing Internet Identity authentication behavior."
   ],
   "imageRequirements": {
     "required": [],
