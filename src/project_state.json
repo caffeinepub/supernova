@@ -2,26 +2,33 @@
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
   "summary": "New project",
-  "architectural_notes": [
-    "Add persistent storage for conversation history per user (privacy/security considerations).",
-    "Provide a data export mechanism (e.g., downloadable file format) for user conversation history."
+  "architectural_notes": [],
+  "known_issues": [
+    "User cannot find/does not see the option to upload photos"
   ],
-  "known_issues": [],
-  "isFixRequest": false,
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-update-the-frontend-conversation-history-flow-to-support-multiple-conversations-end-to-end-the-sidebar-must-list-all-conversations-returned-by-the-backend-new-chat-must-create-and-switch-to-a-new-backend-conversation-sending-a-message-must-append-the-entry-to-the-currently-selected-conversation-switching-conversations-must-load-and-render-that-conversation-s-messages",
-      "title": "Update the frontend conversation history flow to support multiple conversations end-to-end: the sidebar must list all conversations returned by the backend; “New chat” must create and switch to a new backend conversation; sending a message must append the entry to the currently selected conversation; switching conversations must load and render that conversation’s messages.",
+      "id": "feature-add-a-visible-photo-upload-control-to-the-chat-composer-that-lets-a-user-select-one-or-more-images-png-jpg-webp-shows-previews-of-the-selected-images-and-allows-removing-an-image-before-sending",
+      "title": "Add a visible photo-upload control to the chat composer that lets a user select one or more images (PNG/JPG/WebP), shows previews of the selected images, and allows removing an image before sending.",
       "reqIds": [
-        "REQ-7"
+        "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-user-data-export-feature-that-allows-an-authenticated-user-to-export-their-data-at-minimum-profile-all-conversations-all-entries-sources-to-a-downloadable-json-file-from-the-frontend-implement-a-backend-method-that-returns-the-export-payload-and-add-a-frontend-control-e-g-in-the-sidebar-or-header-to-trigger-a-client-side-download",
-      "title": "Add a user data export feature that allows an authenticated user to export their data (at minimum: profile + all conversations + all entries + sources) to a downloadable JSON file from the frontend. Implement a backend method that returns the export payload, and add a frontend control (e.g., in the sidebar or header) to trigger a client-side download.",
+      "id": "feature-support-sending-chat-messages-with-optional-uploaded-photos-rendering-the-photos-inline-in-the-conversation-thread-for-the-corresponding-user-message-and-when-loading-conversation-history",
+      "title": "Support sending chat messages with optional uploaded photos, rendering the photos inline in the conversation thread for the corresponding user message (and when loading conversation history).",
       "reqIds": [
-        "REQ-8"
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-extend-the-backend-conversation-entry-model-and-api-to-store-optional-photo-attachments-per-query-entry-and-update-frontend-query-hooks-to-use-the-updated-api-when-saving-and-fetching-conversation-entries",
+      "title": "Extend the backend conversation entry model and API to store optional photo attachments per query entry, and update frontend query hooks to use the updated API when saving and fetching conversation entries.",
+      "reqIds": [
+        "REQ-3"
       ],
       "version": 1
     }
@@ -29,26 +36,20 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Persist and remember every conversation a user has with the app (conversation history/memory).",
+      "summary": "Add an option/UI to upload photos",
       "reqIds": [],
       "status": "pending"
     },
     {
-      "id": "AR-2",
-      "summary": "Allow users to export their conversation data (data export functionality).",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Update the Motoko backend to persist (across canister upgrades) each authenticated user’s full conversation history as multiple separate conversations, not a single aggregated list. The backend must support: creating a new conversation, listing a user’s conversations (id, title, lastUpdated), fetching a single conversation’s entries, appending a new Q/A entry to a specific conversation, and deleting a conversation.",
+      "id": "AR-5",
+      "summary": "Include uploaded photos in the existing user data export so exported conversation history contains the photo attachment data for each entry that has them.",
       "reqIds": [
-        "REQ-6"
+        "REQ-4"
       ],
       "status": "pending"
     }
   ],
-  "projectName": "Persist multi-conversation history per user and add exportable user data download",
+  "projectName": "Add photo upload option to chat composer and persist uploaded photos in conversation history",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

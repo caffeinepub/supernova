@@ -33,23 +33,27 @@ export default function CapabilitiesDialog({ open, onOpenChange }: CapabilitiesD
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-start gap-2">
                 <span className="text-primary mt-0.5">•</span>
-                <span>Search and retrieve information from Wikipedia and DuckDuckGo</span>
+                <span><strong>Web search:</strong> Search and retrieve information from Wikipedia and DuckDuckGo with a dedicated web search mode</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary mt-0.5">•</span>
-                <span>Accept voice input and read responses aloud</span>
+                <span><strong>Source citations:</strong> Provide clickable links to all information sources with excerpts for verification</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary mt-0.5">•</span>
-                <span>Save conversation history for authenticated users</span>
+                <span><strong>Cooking assistance:</strong> Help with recipes, ingredients, and cooking instructions in an easy-to-follow format</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary mt-0.5">•</span>
-                <span>Provide source citations for all information</span>
+                <span><strong>Voice interaction:</strong> Accept voice input and read responses aloud</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary mt-0.5">•</span>
-                <span>Combine information from multiple sources into coherent summaries</span>
+                <span><strong>Conversation history:</strong> Save and revisit past conversations for authenticated users</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">•</span>
+                <span><strong>Multi-source synthesis:</strong> Combine information from multiple sources into coherent summaries</span>
               </li>
             </ul>
           </div>
@@ -63,23 +67,23 @@ export default function CapabilitiesDialog({ open, onOpenChange }: CapabilitiesD
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-start gap-2">
                 <span className="text-muted-foreground mt-0.5">•</span>
-                <span>Control smart home devices or IoT systems</span>
+                <span><strong>Interactive browsing:</strong> Cannot navigate websites, fill forms, or interact with web pages like a full browser</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-muted-foreground mt-0.5">•</span>
-                <span>Access or manage files on your device</span>
+                <span><strong>Real-time updates:</strong> Information is limited to what public search APIs return at the time of query</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-muted-foreground mt-0.5">•</span>
-                <span>Make phone calls or send messages</span>
+                <span><strong>Device control:</strong> Cannot control smart home devices, IoT systems, or access local files</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-muted-foreground mt-0.5">•</span>
-                <span>Access real-time data or current events beyond search results</span>
+                <span><strong>Communication:</strong> Cannot make phone calls, send messages, or access email</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-muted-foreground mt-0.5">•</span>
-                <span>Generate images, videos, or other media</span>
+                <span><strong>Media generation:</strong> Cannot generate images, videos, or other media content</span>
               </li>
             </ul>
           </div>
@@ -87,8 +91,14 @@ export default function CapabilitiesDialog({ open, onOpenChange }: CapabilitiesD
           {/* Usage tips */}
           <div className="pt-4 border-t border-border">
             <h3 className="text-sm font-semibold mb-2">Tips for Best Results</h3>
+            <p className="text-sm text-muted-foreground mb-2">
+              <strong>Web search mode:</strong> Use the "Web search" toggle for explicit web queries. Results include a synthesized answer and clickable source links.
+            </p>
+            <p className="text-sm text-muted-foreground mb-2">
+              <strong>Cooking queries:</strong> Ask for recipes, ingredients, or cooking instructions. SuperNova will format responses with clear sections for easy following.
+            </p>
             <p className="text-sm text-muted-foreground">
-              Ask clear, specific questions. SuperNova works best with factual queries that can be answered using publicly available information. For authenticated users, all conversations are automatically saved and can be revisited later.
+              <strong>General tips:</strong> Ask clear, specific questions. SuperNova works best with factual queries. If a search fails, try rephrasing your question or checking your internet connection.
             </p>
           </div>
         </div>

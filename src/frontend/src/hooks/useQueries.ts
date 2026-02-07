@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { UserProfile, ConversationSummary, QueryEntry, Response, ExportData } from '../backend';
+import type { UserProfile, ConversationSummary, QueryEntry, Response, ExportData, BlobRef } from '../backend';
+import { ExternalBlob } from '../backend';
 
 export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
@@ -87,15 +88,32 @@ export function useAddQueryEntry() {
       conversationId, 
       question, 
       response,
-      title 
+      title,
+      photo
     }: { 
       conversationId: bigint; 
       question: string; 
       response: Response;
       title?: string;
+      photo?: File;
     }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.addQueryEntry(conversationId, question, response, title || null);
+      
+      let blobRef: BlobRef | null = null;
+      
+      // Convert photo to BlobRef if provided
+      if (photo) {
+        const arrayBuffer = await photo.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        const externalBlob = ExternalBlob.fromBytes(bytes);
+        
+        blobRef = {
+          id: `photo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          blob: externalBlob
+        };
+      }
+      
+      return actor.addQueryEntry(conversationId, question, response, title || null, blobRef);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['conversationEntries', variables.conversationId.toString()] });

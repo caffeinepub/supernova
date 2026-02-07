@@ -35,7 +35,7 @@ export function useConversationHistory() {
     }
   }, [conversationSummaries, activeConversationId, isAuthenticated]);
 
-  const saveEntry = async (question: string, response: Response) => {
+  const saveEntry = async (question: string, response: Response, photo?: File) => {
     if (!isAuthenticated || activeConversationId === null) return;
     
     try {
@@ -45,7 +45,8 @@ export function useConversationHistory() {
         conversationId: activeConversationId, 
         question, 
         response,
-        title 
+        title,
+        photo
       });
     } catch (error) {
       console.error('Failed to save conversation entry:', error);

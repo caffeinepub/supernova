@@ -1,15 +1,15 @@
 import { Button } from '@/components/ui/button';
-import { Sparkles, MessageSquare, Globe, History, Mic } from 'lucide-react';
+import { Sparkles, MessageSquare, Globe, History, Mic, Cookie } from 'lucide-react';
 
 type ChatEmptyStateProps = {
   onPromptClick: (prompt: string) => void;
 };
 
 const examplePrompts = [
-  "What are the latest developments in artificial intelligence?",
-  "Explain quantum computing in simple terms",
-  "What is the history of the Internet Computer?",
-  "How does photosynthesis work?"
+  "How do I make chocolate chip cookies?",
+  "Search the web for the latest AI developments",
+  "What's a good recipe for homemade pizza?",
+  "Find information about quantum computing"
 ];
 
 export default function ChatEmptyState({ onPromptClick }: ChatEmptyStateProps) {
@@ -36,7 +36,13 @@ export default function ChatEmptyState({ onPromptClick }: ChatEmptyStateProps) {
               onClick={() => onPromptClick(prompt)}
             >
               <div className="flex items-start gap-3 w-full">
-                <MessageSquare className="h-4 w-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                {prompt.toLowerCase().includes('cookie') || prompt.toLowerCase().includes('recipe') || prompt.toLowerCase().includes('pizza') ? (
+                  <Cookie className="h-4 w-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                ) : prompt.toLowerCase().includes('search') || prompt.toLowerCase().includes('find') ? (
+                  <Globe className="h-4 w-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                ) : (
+                  <MessageSquare className="h-4 w-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                )}
                 <span className="text-sm leading-relaxed">{prompt}</span>
               </div>
             </Button>
@@ -51,7 +57,11 @@ export default function ChatEmptyState({ onPromptClick }: ChatEmptyStateProps) {
           <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <Globe className="h-3.5 w-3.5" />
-              <span>Multi-source search</span>
+              <span>Web search</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Cookie className="h-3.5 w-3.5" />
+              <span>Cooking help</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Mic className="h-3.5 w-3.5" />

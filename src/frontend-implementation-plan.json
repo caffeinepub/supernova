@@ -1,69 +1,91 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Multi-conversation per-user history and exportable user data (frontend)",
+  "title": "Chat photo attachments in composer and conversation history (frontend wiring)",
   "requirements": [
     {
-      "id": "REQ-7",
-      "summary": "Update the chat history UI and state to support multiple backend conversations (list/create/switch/append) end-to-end.",
+      "id": "REQ-1",
+      "summary": "Add an image upload control to the chat composer with multi-select, thumbnails, remove, and clear-on-send behavior.",
       "acceptanceCriteria": [
-        "When logged in, the sidebar shows multiple conversations (not just one hardcoded 'main' conversation).",
-        "Clicking “New chat” creates a new conversation that persists (appears after reload/login) and becomes the active conversation.",
-        "Sending messages stores entries into the active conversation; switching conversations shows the correct message thread for that conversation.",
-        "All user-facing text added/changed for this feature is in English."
+        "ChatComposer shows an attachment/upload button next to the existing composer controls.",
+        "Clicking the button opens a file picker limited to common image formats (png, jpg/jpeg, webp).",
+        "After selection, the composer shows thumbnail previews for each selected image.",
+        "Each selected image can be removed before sending.",
+        "Sending a message clears the selected images from the composer state."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useQueries.ts",
+          "path": "frontend/src/components/chat/types.ts",
           "operation": "modify",
-          "description": "Replace the legacy single-thread history hooks with React Query hooks backed by the new multi-conversation backend capabilities: listConversations, createConversation, getConversationEntries, addQueryEntry, and deleteConversationHistory (if needed by UI). Ensure query keys include conversation id and invalidate the conversation list/entries appropriately after mutations. Verify the component's usage instructions before implementing."
+          "description": "Extend chat UI types to represent optional photo attachments on user messages (e.g., local preview URLs for pending attachments and persisted blob URLs for history)."
         },
         {
-          "path": "frontend/src/hooks/useConversationHistory.ts",
+          "path": "frontend/src/components/chat/ChatComposer.tsx",
           "operation": "modify",
-          "description": "Refactor conversation state management to: keep an active conversation id (bigint), load conversation summaries for the sidebar, load entries for the active conversation on switch, and ensure startNewConversation creates a backend conversation and immediately activates it. Update saveEntry to append to the active conversation via addQueryEntry. Clear local conversation state when unauthenticated. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/history/ConversationSidebar.tsx",
-          "operation": "modify",
-          "description": "Update types to match backend conversation summaries (id: bigint, title, lastUpdated) and display multiple conversations from listConversations. Ensure the selected state uses the active bigint id, and keep English empty-state text. Verify the component's usage instructions before implementing."
+          "description": "Add a visible photo upload control (file input triggered by a button) supporting multi-select for PNG/JPG/WebP, store selected files in component state, render thumbnail previews, allow removing individual selections, and clear attachment state after successful send. Use the blob-storage ExternalBlob capability (wrapping selected image bytes for upload later) where appropriate; verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Wire the updated multi-conversation flow into the app: pass backend conversation summaries into ConversationSidebar, ensure “New chat” triggers backend create+switch, ensure switching loads and renders entries for that conversation, and ensure sending a message appends to the active conversation. Keep all new/changed user-facing text in English. Verify the component's usage instructions before implementing."
+          "description": "Update the ChatComposer wiring so onSendMessage can receive attached photos (in addition to text/mode), and ensure composer state is cleared after sending (including attachments)."
         }
       ]
     },
     {
-      "id": "REQ-8",
-      "summary": "Add an authenticated 'Export data' action in the UI that downloads the user’s export payload as a local JSON file.",
+      "id": "REQ-2",
+      "summary": "Allow sending messages with optional photos and render those photos inline for the corresponding user messages, including when loading conversation history.",
       "acceptanceCriteria": [
-        "Backend provides an authenticated API that returns the caller’s export payload containing user profile (if present) and all conversations and entries.",
-        "Frontend provides an “Export data” action visible to authenticated users that downloads a .json file without routing through any external service.",
-        "The downloaded JSON contains enough information to reconstruct: conversations, questions, summarized answers, and source fields (title/url/excerpt).",
-        "If the user is not authenticated, the export control is hidden or disabled with clear English messaging."
+        "When a user sends a message with photos attached, the new user message in the thread renders the photo(s) inline (e.g., above or below the text).",
+        "When switching conversations or reloading the app, previously sent messages still show their uploaded photos.",
+        "Assistant messages do not require photo attachments, but the UI remains stable if attachments are absent."
       ],
       "file_operations": [
         {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "When sending, immediately add a user Message that includes local photo previews (e.g., object URLs) so the thread renders attachments optimistically; when history is loaded, map persisted attachments on entries into Message photo render data using blob-storage ExternalBlob.getDirectURL() for stable inline rendering. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/chat/ConversationThread.tsx",
+          "operation": "modify",
+          "description": "Render optional photo attachments inline for user messages (e.g., a responsive thumbnail grid above/below the text), ensuring assistant message layout remains unchanged and UI remains stable when attachments are absent."
+        },
+        {
+          "path": "frontend/src/components/chat/types.ts",
+          "operation": "modify",
+          "description": "Refine message attachment typing as needed to support both local (pre-send) and persisted (history) photo rendering without impacting assistant messages."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Update frontend types and query hooks to send and fetch conversation entries with optional photo attachments using the updated backend API.",
+      "acceptanceCriteria": [
+        "Backend QueryEntry type includes an optional list of photo attachments (including at least bytes and content-type, plus a filename field if available).",
+        "Backend addQueryEntry (or a new compatible method) accepts optional photo attachments and persists them with the entry.",
+        "Frontend hooks that save entries (useAddQueryEntry/useConversationHistory.saveEntry) can include attachments when present and still work when no attachments are provided.",
+        "Fetched conversation entries expose attachments to the frontend so they can be rendered in the thread."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/backend.d.ts",
+          "operation": "modify",
+          "description": "Update the frontend backend type declarations to match the updated conversation entry attachment model (QueryEntry exposing optional list of photo attachments; addQueryEntry accepting optional attachments) so TypeScript compilation aligns with the new API."
+        },
+        {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add a React Query hook/mutation that calls the backend exportUserData capability and returns the ExportData payload typed from frontend/src/backend.d.ts. Ensure authorization failures are handled cleanly by the caller. Verify the component's usage instructions before implementing."
+          "description": "Extend useAddQueryEntry to accept optional photo attachments and pass them through to the backend actor call; convert selected files to the attachment format expected by the updated API using blob-storage ExternalBlob.fromBytes (optionally with upload progress) and include content-type/filename when available. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/utils/downloadJson.ts",
-          "operation": "create",
-          "description": "Add a small utility to trigger a client-side download of a JSON blob with a sensible filename (e.g., includes date), without using any external services. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/history/ConversationSidebar.tsx",
+          "path": "frontend/src/hooks/useConversationHistory.ts",
           "operation": "modify",
-          "description": "Add an “Export data” control visible only when the user is authenticated; when unauthenticated, hide it or show a disabled state with clear English messaging (per requirement). Wire it to a callback prop so the parent can run export + download. Verify the component's usage instructions before implementing."
+          "description": "Update saveEntry to accept optional attachments and forward them to useAddQueryEntry, while preserving existing behavior when no attachments are provided."
         },
         {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Implement the export action handler: when authenticated, call exportUserData via the new hook, then download as .json using the downloadJson utility. Ensure UI surfaces failures gracefully in English (e.g., toast/alert) and that the control is hidden/disabled when not authenticated. Verify the component's usage instructions before implementing."
+          "description": "Pass optional photo attachments from the composer through to saveEntry so persisted conversation history includes attachments and can be re-rendered on reload/switch."
         }
       ]
     }

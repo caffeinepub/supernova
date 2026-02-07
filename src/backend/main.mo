@@ -2,14 +2,18 @@ import List "mo:core/List";
 import Map "mo:core/Map";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
+import Iter "mo:core/Iter";
 import Int "mo:core/Int";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
-import Iter "mo:core/Iter";
+import Blob "blob-storage/Storage";
+import MixinStorage "blob-storage/Mixin";
 import Migration "migration";
 
 (with migration = Migration.run)
 actor {
+  include MixinStorage();
+
   // Authorization setup
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -25,10 +29,16 @@ actor {
     sources : [Source];
   };
 
+  public type BlobRef = {
+    id : Text;
+    blob : Blob.ExternalBlob;
+  };
+
   public type QueryEntry = {
     question : Text;
     timestamp : Int;
     response : Response;
+    photo : ?BlobRef;
   };
 
   public type ConversationSummary = {
@@ -84,7 +94,7 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  // Conversation History Management
+  // Conversation Management
   public shared ({ caller }) func createConversation(title : Text) : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only authenticated users can create conversations");
@@ -149,7 +159,13 @@ actor {
     };
   };
 
-  public shared ({ caller }) func addQueryEntry(conversationId : Nat, question : Text, response : Response, title : ?Text) : async () {
+  public shared ({ caller }) func addQueryEntry(
+    conversationId : Nat,
+    question : Text,
+    response : Response,
+    title : ?Text,
+    photo : ?BlobRef,
+  ) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only authenticated users can add entries");
     };
@@ -157,6 +173,7 @@ actor {
       question;
       timestamp = Time.now();
       response;
+      photo;
     };
 
     switch (userConversations.get(caller)) {

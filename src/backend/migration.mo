@@ -1,9 +1,10 @@
 import Map "mo:core/Map";
-import List "mo:core/List";
 import Principal "mo:core/Principal";
+import List "mo:core/List";
+import Int "mo:core/Int";
+import Blob "blob-storage/Storage";
 
 module {
-  // Types from old actor
   public type Source = {
     title : Text;
     url : Text;
@@ -15,29 +16,29 @@ module {
     sources : [Source];
   };
 
-  public type QueryEntry = {
+  public type BlobRef = {
+    id : Text;
+    blob : Blob.ExternalBlob;
+  };
+
+  public type OldQueryEntry = {
     question : Text;
+    timestamp : Int;
     response : Response;
+    // No photo field in the old version.
   };
 
-  public type Conversation = {
-    queries : List.List<QueryEntry>;
-  };
-
-  public type UserProfile = {
-    name : Text;
-  };
-
-  public type OldActor = {
-    conversations : Map.Map<Principal, Conversation>;
-    userProfiles : Map.Map<Principal, UserProfile>;
-  };
-
-  // Types for new actor
   public type NewQueryEntry = {
     question : Text;
-    timestamp : Int; // new field
+    timestamp : Int;
     response : Response;
+    photo : ?BlobRef;
+  };
+
+  public type OldConversation = {
+    title : Text;
+    entries : List.List<OldQueryEntry>;
+    lastUpdated : Int;
   };
 
   public type NewConversation = {
@@ -46,36 +47,44 @@ module {
     lastUpdated : Int;
   };
 
+  public type UserProfile = {
+    name : Text;
+  };
+
+  public type OldActor = {
+    userConversations : Map.Map<Principal, Map.Map<Nat, OldConversation>>;
+    userProfiles : Map.Map<Principal, UserProfile>;
+  };
+
   public type NewActor = {
     userConversations : Map.Map<Principal, Map.Map<Nat, NewConversation>>;
     userProfiles : Map.Map<Principal, UserProfile>;
   };
 
-  // Migration function
   public func run(old : OldActor) : NewActor {
-    let newUserConversations = old.conversations.map<Principal, Conversation, Map.Map<Nat, NewConversation>>(
-      func(_, oldConversation) {
-        let newEntries = oldConversation.queries.map<QueryEntry, NewQueryEntry>(
-          func(oldEntry) {
-            { oldEntry with timestamp = 0 }; // Default value for migration
+    let newUserConversations = old.userConversations.map<Principal, Map.Map<Nat, OldConversation>, Map.Map<Nat, NewConversation>>(
+      func(_principal, oldConversationMap) {
+        oldConversationMap.map<Nat, OldConversation, NewConversation>(
+          func(_id, oldConversation) {
+            let newEntries = oldConversation.entries.map<OldQueryEntry, NewQueryEntry>(
+              func(oldEntry) {
+                {
+                  oldEntry with
+                  photo = null;
+                };
+              }
+            );
+            {
+              oldConversation with entries = newEntries;
+            };
           }
         );
-
-        let newConversation : NewConversation = {
-          title = "";
-          entries = newEntries;
-          lastUpdated = 0; // Default value for migration
-        };
-
-        let newConvMap = Map.empty<Nat, NewConversation>();
-        newConvMap.add(0, newConversation);
-        newConvMap;
       }
     );
 
     {
+      old with
       userConversations = newUserConversations;
-      userProfiles = old.userProfiles;
     };
   };
 };

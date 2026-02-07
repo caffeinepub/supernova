@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useInternetIdentity } from './hooks/useInternetIdentity';
 import { useGetCallerUserProfile, useExportUserData } from './hooks/useQueries';
 import LoginButton from './components/auth/LoginButton';
@@ -8,24 +8,20 @@ import ChatComposer from './components/chat/ChatComposer';
 import ChatEmptyState from './components/chat/ChatEmptyState';
 import ConversationSidebar from './components/history/ConversationSidebar';
 import CapabilitiesDialog from './components/help/CapabilitiesDialog';
+import VoiceSettingsDialog from './components/settings/VoiceSettingsDialog';
 import { useConversationHistory } from './hooks/useConversationHistory';
 import { useInformationRetrieval } from './hooks/useInformationRetrieval';
+import { useSpeechSynthesis } from './hooks/useSpeechSynthesis';
+import { useVoiceResponseMode } from './hooks/useVoiceResponseMode';
 import { downloadJson } from './utils/downloadJson';
-import { Menu, HelpCircle } from 'lucide-react';
+import { Menu, HelpCircle, Volume2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
-
-export type Message = {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  sources?: Array<{ title: string; url: string; excerpt: string }>;
-  timestamp: Date;
-};
+import type { Message, MessageMode, PhotoAttachment } from './components/chat/types';
 
 function App() {
   const { identity } = useInternetIdentity();
@@ -40,46 +36,83 @@ function App() {
   } = useConversationHistory();
   const { fetchInformation, isLoading: retrievalLoading, partialFailureWarning } = useInformationRetrieval();
   const { mutateAsync: exportData, isPending: isExporting } = useExportUserData();
+  const { speak, stop, isSpeaking, isSupported: ttsSupported } = useSpeechSynthesis();
+  const { mode: voiceMode, setMode: setVoiceMode } = useVoiceResponseMode();
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [capabilitiesOpen, setCapabilitiesOpen] = useState(false);
+  const [voiceSettingsOpen, setVoiceSettingsOpen] = useState(false);
   const [composerValue, setComposerValue] = useState('');
+  const lastMessageIdRef = useRef<string | null>(null);
 
   const isAuthenticated = !!identity;
   const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
 
+  // Show warning when voice mode is enabled but TTS is not supported
+  useEffect(() => {
+    if ((voiceMode === 'voice-text' || voiceMode === 'voice-only') && !ttsSupported) {
+      toast.error('Text-to-speech is not supported in your browser. Voice features will not work.');
+    }
+  }, [voiceMode, ttsSupported]);
+
   // Load conversation entries when active conversation changes
   useEffect(() => {
     if (activeEntries.length > 0) {
-      const loadedMessages: Message[] = activeEntries.flatMap((entry, idx) => [
-        {
+      const loadedMessages: Message[] = activeEntries.flatMap((entry, idx) => {
+        const userMessage: Message = {
           id: `user-${idx}-${entry.timestamp.toString()}`,
           role: 'user' as const,
           content: entry.question,
           timestamp: new Date(Number(entry.timestamp) / 1000000)
-        },
-        {
+        };
+
+        // Add photo attachment if present
+        if (entry.photo) {
+          userMessage.photos = [{
+            url: entry.photo.blob.getDirectURL(),
+            filename: entry.photo.id
+          }];
+        }
+
+        const assistantMessage: Message = {
           id: `assistant-${idx}-${entry.timestamp.toString()}`,
           role: 'assistant' as const,
           content: entry.response.summarizedAnswer,
           sources: entry.response.sources,
           timestamp: new Date(Number(entry.timestamp) / 1000000)
-        }
-      ]);
+        };
+
+        return [userMessage, assistantMessage];
+      });
+
       setMessages(loadedMessages);
+      // Reset last message ID when loading history to prevent auto-play
+      lastMessageIdRef.current = loadedMessages.length > 0 
+        ? loadedMessages[loadedMessages.length - 1].id 
+        : null;
     } else {
       setMessages([]);
+      lastMessageIdRef.current = null;
     }
   }, [activeEntries]);
 
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = async (content: string, mode: MessageMode, photos?: File[]) => {
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: 'user',
       content,
-      timestamp: new Date()
+      timestamp: new Date(),
+      mode
     };
+
+    // Add photo previews to user message
+    if (photos && photos.length > 0) {
+      userMessage.photos = photos.map(photo => ({
+        url: URL.createObjectURL(photo),
+        filename: photo.name
+      }));
+    }
 
     setMessages(prev => [...prev, userMessage]);
 
@@ -88,24 +121,38 @@ function App() {
       
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
-        role: 'assistant',
+        role: 'assistant' as const,
         content: result.summarizedAnswer,
         sources: result.sources,
-        timestamp: new Date()
+        timestamp: new Date(),
+        mode
       };
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Save to backend if authenticated
+      // Auto-speak new assistant message if voice mode is enabled
+      if ((voiceMode === 'voice-text' || voiceMode === 'voice-only') && ttsSupported) {
+        // Only speak if this is a newly generated message (not from history load)
+        if (lastMessageIdRef.current !== assistantMessage.id) {
+          speak(result.summarizedAnswer);
+          lastMessageIdRef.current = assistantMessage.id;
+        }
+      }
+
+      // Save to backend if authenticated (only save first photo for now)
       if (isAuthenticated) {
-        await saveEntry(content, result);
+        const photoToSave = photos && photos.length > 0 ? photos[0] : undefined;
+        await saveEntry(content, result, photoToSave);
       }
     } catch (error) {
       const errorMessage: Message = {
         id: `assistant-error-${Date.now()}`,
-        role: 'assistant',
-        content: 'I apologize, but I encountered an error while retrieving information. Please try again.',
-        timestamp: new Date()
+        role: 'assistant' as const,
+        content: mode === 'web-search' 
+          ? 'Web search failed. Please check your internet connection and try again. If the problem persists, try rephrasing your query.'
+          : 'I apologize, but I encountered an error while retrieving information. Please try again.',
+        timestamp: new Date(),
+        mode
       };
       setMessages(prev => [...prev, errorMessage]);
     }
@@ -115,6 +162,7 @@ function App() {
     try {
       await startNewConversation();
       setMessages([]);
+      lastMessageIdRef.current = null;
       setSidebarOpen(false);
     } catch (error) {
       toast.error('Failed to create new conversation');
@@ -201,6 +249,25 @@ function App() {
               </div>
               
               <div className="flex items-center gap-1">
+                {isSpeaking && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={stop}
+                    title="Stop speaking"
+                    className="text-primary"
+                  >
+                    <Volume2 className="h-5 w-5 animate-pulse" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setVoiceSettingsOpen(true)}
+                  title="Voice Settings"
+                >
+                  <Settings className="h-5 w-5" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -230,7 +297,13 @@ function App() {
                 <ChatEmptyState onPromptClick={handleExamplePrompt} />
               </div>
             ) : (
-              <ConversationThread messages={messages} />
+              <ConversationThread 
+                messages={messages} 
+                voiceMode={voiceMode}
+                isSpeaking={isSpeaking}
+                onSpeak={speak}
+                onStop={stop}
+              />
             )}
 
             {/* Chat composer - pinned to bottom */}
@@ -258,6 +331,13 @@ function App() {
         {/* Dialogs */}
         <ProfileSetupDialog open={showProfileSetup} />
         <CapabilitiesDialog open={capabilitiesOpen} onOpenChange={setCapabilitiesOpen} />
+        <VoiceSettingsDialog 
+          open={voiceSettingsOpen} 
+          onOpenChange={setVoiceSettingsOpen}
+          mode={voiceMode}
+          onModeChange={setVoiceMode}
+          isSupported={ttsSupported}
+        />
         <Toaster />
       </div>
     </ThemeProvider>

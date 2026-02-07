@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { summarizeResults } from '../utils/summarize';
+import { isCookingPrompt, formatCookingResponse } from '../utils/cooking';
 
 type Source = {
   title: string;
@@ -21,7 +22,7 @@ export function useInformationRetrieval() {
     setPartialFailureWarning(null);
 
     try {
-      const [wikipediaResult, duckDuckGoResult] = await Promise.allSettled([
+      const [wikipediaResults, duckDuckGoResults] = await Promise.allSettled([
         fetchWikipedia(query),
         fetchDuckDuckGo(query)
       ]);
@@ -30,16 +31,18 @@ export function useInformationRetrieval() {
       const snippets: string[] = [];
       let failureCount = 0;
 
-      if (wikipediaResult.status === 'fulfilled' && wikipediaResult.value) {
-        sources.push(wikipediaResult.value);
-        snippets.push(wikipediaResult.value.excerpt);
+      // Collect Wikipedia results (can be multiple)
+      if (wikipediaResults.status === 'fulfilled' && wikipediaResults.value.length > 0) {
+        sources.push(...wikipediaResults.value);
+        snippets.push(...wikipediaResults.value.map(s => s.excerpt));
       } else {
         failureCount++;
       }
 
-      if (duckDuckGoResult.status === 'fulfilled' && duckDuckGoResult.value) {
-        sources.push(duckDuckGoResult.value);
-        snippets.push(duckDuckGoResult.value.excerpt);
+      // Collect DuckDuckGo results (can be multiple)
+      if (duckDuckGoResults.status === 'fulfilled' && duckDuckGoResults.value.length > 0) {
+        sources.push(...duckDuckGoResults.value);
+        snippets.push(...duckDuckGoResults.value.map(s => s.excerpt));
       } else {
         failureCount++;
       }
@@ -54,7 +57,11 @@ export function useInformationRetrieval() {
         );
       }
 
-      const summarizedAnswer = summarizeResults(query, snippets);
+      // Check if this is a cooking query and format accordingly
+      const isCooking = isCookingPrompt(query);
+      const summarizedAnswer = isCooking 
+        ? formatCookingResponse(snippets, query)
+        : summarizeResults(query, snippets);
 
       return {
         summarizedAnswer,
@@ -72,63 +79,78 @@ export function useInformationRetrieval() {
   };
 }
 
-async function fetchWikipedia(query: string): Promise<Source | null> {
+async function fetchWikipedia(query: string): Promise<Source[]> {
   try {
-    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*&srlimit=1`;
+    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*&srlimit=3`;
     const searchResponse = await fetch(searchUrl);
     const searchData = await searchResponse.json();
 
-    if (!searchData.query?.search?.[0]) {
-      return null;
+    if (!searchData.query?.search || searchData.query.search.length === 0) {
+      return [];
     }
 
-    const pageTitle = searchData.query.search[0].title;
-    const snippet = searchData.query.search[0].snippet.replace(/<[^>]*>/g, '');
+    const results: Source[] = [];
 
-    const extractUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro&explaintext&titles=${encodeURIComponent(pageTitle)}&format=json&origin=*`;
-    const extractResponse = await fetch(extractUrl);
-    const extractData = await extractResponse.json();
+    // Get up to 3 results
+    for (const result of searchData.query.search.slice(0, 3)) {
+      const pageTitle = result.title;
+      const snippet = result.snippet.replace(/<[^>]*>/g, '');
 
-    const pages = extractData.query?.pages;
-    const pageId = Object.keys(pages)[0];
-    const extract = pages[pageId]?.extract || snippet;
+      const extractUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro&explaintext&titles=${encodeURIComponent(pageTitle)}&format=json&origin=*`;
+      const extractResponse = await fetch(extractUrl);
+      const extractData = await extractResponse.json();
 
-    return {
-      title: `Wikipedia: ${pageTitle}`,
-      url: `https://en.wikipedia.org/wiki/${encodeURIComponent(pageTitle.replace(/ /g, '_'))}`,
-      excerpt: extract.slice(0, 500) + (extract.length > 500 ? '...' : '')
-    };
+      const pages = extractData.query?.pages;
+      const pageId = Object.keys(pages)[0];
+      const extract = pages[pageId]?.extract || snippet;
+
+      results.push({
+        title: `Wikipedia: ${pageTitle}`,
+        url: `https://en.wikipedia.org/wiki/${encodeURIComponent(pageTitle.replace(/ /g, '_'))}`,
+        excerpt: extract.slice(0, 500) + (extract.length > 500 ? '...' : '')
+      });
+    }
+
+    return results;
   } catch (error) {
     console.error('Wikipedia fetch error:', error);
-    return null;
+    return [];
   }
 }
 
-async function fetchDuckDuckGo(query: string): Promise<Source | null> {
+async function fetchDuckDuckGo(query: string): Promise<Source[]> {
   try {
     const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
     const response = await fetch(url);
     const data = await response.json();
 
+    const results: Source[] = [];
+
+    // Add abstract if available
     if (data.AbstractText) {
-      return {
+      results.push({
         title: `DuckDuckGo: ${data.Heading || query}`,
         url: data.AbstractURL || `https://duckduckgo.com/?q=${encodeURIComponent(query)}`,
         excerpt: data.AbstractText
-      };
+      });
     }
 
-    if (data.RelatedTopics?.[0]?.Text) {
-      return {
-        title: `DuckDuckGo: ${data.RelatedTopics[0].Text.split(' - ')[0]}`,
-        url: data.RelatedTopics[0].FirstURL || `https://duckduckgo.com/?q=${encodeURIComponent(query)}`,
-        excerpt: data.RelatedTopics[0].Text
-      };
+    // Add related topics (up to 3)
+    if (data.RelatedTopics && Array.isArray(data.RelatedTopics)) {
+      for (const topic of data.RelatedTopics.slice(0, 3)) {
+        if (topic.Text && topic.FirstURL) {
+          results.push({
+            title: `DuckDuckGo: ${topic.Text.split(' - ')[0]}`,
+            url: topic.FirstURL,
+            excerpt: topic.Text
+          });
+        }
+      }
     }
 
-    return null;
+    return results;
   } catch (error) {
     console.error('DuckDuckGo fetch error:', error);
-    return null;
+    return [];
   }
 }

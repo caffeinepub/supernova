@@ -15,7 +15,7 @@ export function useSpeechSynthesis(): SpeechSynthesisHook {
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
-    if ('speechSynthesis' in window) {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       setIsSupported(true);
     } else {
       setIsSupported(false);
@@ -23,8 +23,12 @@ export function useSpeechSynthesis(): SpeechSynthesisHook {
     }
 
     return () => {
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        try {
+          window.speechSynthesis.cancel();
+        } catch (err) {
+          console.error('Error canceling speech on cleanup:', err);
+        }
       }
     };
   }, []);
@@ -35,8 +39,15 @@ export function useSpeechSynthesis(): SpeechSynthesisHook {
       return;
     }
 
+    if (!text || !text.trim()) {
+      return;
+    }
+
     try {
-      window.speechSynthesis.cancel();
+      // Cancel any ongoing speech
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
       
       const utterance = new SpeechSynthesisUtterance(text);
       utteranceRef.current = utterance;
@@ -48,12 +59,14 @@ export function useSpeechSynthesis(): SpeechSynthesisHook {
 
       utterance.onend = () => {
         setIsSpeaking(false);
+        utteranceRef.current = null;
       };
 
       utterance.onerror = (event) => {
         console.error('Speech synthesis error:', event);
         setError('Text-to-speech error occurred.');
         setIsSpeaking(false);
+        utteranceRef.current = null;
       };
 
       window.speechSynthesis.speak(utterance);
@@ -61,15 +74,21 @@ export function useSpeechSynthesis(): SpeechSynthesisHook {
       console.error('Error speaking:', err);
       setError('Failed to speak text. Please try again.');
       setIsSpeaking(false);
+      utteranceRef.current = null;
     }
   };
 
   const stop = () => {
     try {
-      window.speechSynthesis.cancel();
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
       setIsSpeaking(false);
+      utteranceRef.current = null;
     } catch (err) {
       console.error('Error stopping speech:', err);
+      setIsSpeaking(false);
+      utteranceRef.current = null;
     }
   };
 

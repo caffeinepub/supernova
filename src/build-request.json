@@ -1,81 +1,92 @@
 {
   "kind": "build_request",
-  "title": "Persist multi-conversation history per user and add exportable user data download",
+  "title": "Add photo upload option to chat composer and persist uploaded photos in conversation history",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-6",
-      "text": "Update the Motoko backend to persist (across canister upgrades) each authenticated user’s full conversation history as multiple separate conversations, not a single aggregated list. The backend must support: creating a new conversation, listing a user’s conversations (id, title, lastUpdated), fetching a single conversation’s entries, appending a new Q/A entry to a specific conversation, and deleting a conversation.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-6",
-          "msg-10"
-        ],
-        "quotes": [
-          "I want it to remember every conversation had with it I want data to be exportable",
-          "yes"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Conversation history is preserved after a canister upgrade (i.e., stored in stable state).",
-        "A user can have more than one conversation; each conversation has a stable unique id.",
-        "Backend exposes Candid methods to: createConversation, listConversations, getConversation(conversationId), appendEntry(conversationId, question, response), deleteConversation(conversationId).",
-        "All conversation APIs enforce access control so callers can only access their own data unless admin logic already permits otherwise."
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Update the frontend conversation history flow to support multiple conversations end-to-end: the sidebar must list all conversations returned by the backend; “New chat” must create and switch to a new backend conversation; sending a message must append the entry to the currently selected conversation; switching conversations must load and render that conversation’s messages.",
+      "id": "REQ-1",
+      "text": "Add a visible photo-upload control to the chat composer that lets a user select one or more images (PNG/JPG/WebP), shows previews of the selected images, and allows removing an image before sending.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6",
-          "msg-10"
+          "msg-5"
         ],
         "quotes": [
-          "I want it to remember every conversation had with it I want data to be exportable",
-          "yes"
+          "I dont see the option to upload photots"
         ]
       },
       "acceptanceCriteria": [
-        "When logged in, the sidebar shows multiple conversations (not just one hardcoded 'main' conversation).",
-        "Clicking “New chat” creates a new conversation that persists (appears after reload/login) and becomes the active conversation.",
-        "Sending messages stores entries into the active conversation; switching conversations shows the correct message thread for that conversation.",
-        "All user-facing text added/changed for this feature is in English."
+        "ChatComposer shows an attachment/upload button next to the existing composer controls.",
+        "Clicking the button opens a file picker limited to common image formats (png, jpg/jpeg, webp).",
+        "After selection, the composer shows thumbnail previews for each selected image.",
+        "Each selected image can be removed before sending.",
+        "Sending a message clears the selected images from the composer state."
       ]
     },
     {
-      "id": "REQ-8",
-      "text": "Add a user data export feature that allows an authenticated user to export their data (at minimum: profile + all conversations + all entries + sources) to a downloadable JSON file from the frontend. Implement a backend method that returns the export payload, and add a frontend control (e.g., in the sidebar or header) to trigger a client-side download.",
+      "id": "REQ-2",
+      "text": "Support sending chat messages with optional uploaded photos, rendering the photos inline in the conversation thread for the corresponding user message (and when loading conversation history).",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-6",
-          "msg-10"
+          "msg-5"
         ],
         "quotes": [
-          "I want it to remember every conversation had with it I want data to be exportable",
-          "yes"
+          "I dont see the option to upload photots"
         ]
       },
       "acceptanceCriteria": [
-        "Backend provides an authenticated API that returns the caller’s export payload containing user profile (if present) and all conversations and entries.",
-        "Frontend provides an “Export data” action visible to authenticated users that downloads a .json file without routing through any external service.",
-        "The downloaded JSON contains enough information to reconstruct: conversations, questions, summarized answers, and source fields (title/url/excerpt).",
-        "If the user is not authenticated, the export control is hidden or disabled with clear English messaging."
+        "When a user sends a message with photos attached, the new user message in the thread renders the photo(s) inline (e.g., above or below the text).",
+        "When switching conversations or reloading the app, previously sent messages still show their uploaded photos.",
+        "Assistant messages do not require photo attachments, but the UI remains stable if attachments are absent."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Extend the backend conversation entry model and API to store optional photo attachments per query entry, and update frontend query hooks to use the updated API when saving and fetching conversation entries.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-5"
+        ],
+        "quotes": [
+          "I dont see the option to upload photots"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend QueryEntry type includes an optional list of photo attachments (including at least bytes and content-type, plus a filename field if available).",
+        "Backend addQueryEntry (or a new compatible method) accepts optional photo attachments and persists them with the entry.",
+        "Frontend hooks that save entries (useAddQueryEntry/useConversationHistory.saveEntry) can include attachments when present and still work when no attachments are provided.",
+        "Fetched conversation entries expose attachments to the frontend so they can be rendered in the thread."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Include uploaded photos in the existing user data export so exported conversation history contains the photo attachment data for each entry that has them.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-5"
+        ],
+        "quotes": [
+          "I dont see the option to upload photots"
+        ]
+      },
+      "acceptanceCriteria": [
+        "exportUserData output includes photo attachment data for entries that have photos.",
+        "Export still works for users with no photos and for existing conversations created before this change."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo; add backend/migration.mo only if required for stable-state upgrade handling.",
-    "Do not edit files under frontend/src/components/ui or any paths listed as immutable in SYSTEM_CONTEXT.",
-    "No external databases or third-party storage/services for persistence or export; data must be stored in-canister and exported directly to the client."
+    "Use English for any user-facing text.",
+    "Do not edit files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui (compose them instead).",
+    "Backend must remain a single Motoko actor in backend/main.mo; only add backend/migration.mo if an upgrade requires state migration."
   ],
   "nonGoals": [
-    "Implementing third-party sync/export destinations (e.g., Google Drive, Dropbox).",
-    "Adding real-time collaboration or sharing conversation links publicly.",
-    "Adding new LLM/AI integrations beyond the existing information retrieval flow."
+    "Do not implement AI/image understanding, OCR, or any automated photo analysis.",
+    "Do not integrate third-party file storage/CDNs or external databases.",
+    "Do not add non-Internet-Identity authentication methods."
   ],
   "imageRequirements": {
     "required": [],

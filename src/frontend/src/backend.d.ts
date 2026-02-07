@@ -7,6 +7,17 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
+export class ExternalBlob {
+    getBytes(): Promise<Uint8Array<ArrayBuffer>>;
+    getDirectURL(): string;
+    static fromURL(url: string): ExternalBlob;
+    static fromBytes(blob: Uint8Array<ArrayBuffer>): ExternalBlob;
+    withUploadProgress(onProgress: (percentage: number) => void): ExternalBlob;
+}
+export interface BlobRef {
+    id: string;
+    blob: ExternalBlob;
+}
 export interface ExportData {
     conversations: Array<ExportConversation>;
     profile?: UserProfile;
@@ -26,6 +37,7 @@ export interface QueryEntry {
     question: string;
     response: Response;
     timestamp: bigint;
+    photo?: BlobRef;
 }
 export interface Response {
     summarizedAnswer: string;
@@ -45,7 +57,7 @@ export enum UserRole {
     guest = "guest"
 }
 export interface backendInterface {
-    addQueryEntry(conversationId: bigint, question: string, response: Response, title: string | null): Promise<void>;
+    addQueryEntry(conversationId: bigint, question: string, response: Response, title: string | null, photo: BlobRef | null): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createConversation(title: string): Promise<bigint>;
     deleteConversationHistory(conversationId: bigint): Promise<void>;
